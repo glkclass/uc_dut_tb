@@ -67,22 +67,10 @@ module ttb;
     // init dead pixels mask
     `INIT_DDR3_DP_MASK(Init_1, $random, (`DDR3_DEAD_PIXEL_TABLE_BASE_ADDR / `DDR3_LINE_SIZE), 1);
 
-    initial
-        begin : l_main
-            $timeformat(-9, 3, "ns", 8);
-            `STORE_WAVE(ttb, "wf.vcd")
+    `INIT_ARTEFACTS("wf.vcd")
 
-            // `ifdef PRINT_DEBUG_CONSTS
-            //     `uvm_debug($sformatf("Param ZZZ: %d", xxx.yyy.ZZZ))
-            // `endif
+    `START_TEST(dut_if_h, T_TEST_LEN)
 
-            // Provide DUT interfaces to UVM infra
-            uvm_config_db #(virtual dut_if)::set(null, "uvm_test_top", "dut_vif", dut_if_h);
-            fork
-                run_test();
-                timeout_sim(T_TEST_LEN, 10);
-            join_any
-        end
 
 
     wire rst_n, ddr_initilaized, clk_74_25_mhz;

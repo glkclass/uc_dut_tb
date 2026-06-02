@@ -9,6 +9,7 @@
 `ifndef DUT_TB_MACRO_SVH
 `define DUT_TB_MACRO_SVH
 
+
 `define     INIT_DDR3(name, rnd_func, row_start, row_number) \
     initial\
         begin\

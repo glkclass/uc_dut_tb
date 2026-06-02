@@ -15,7 +15,7 @@ run: run_tb view_tb
 
 
 # rules
-debug: clean build
+debug: build run
 	$(ECHO_HEADER)
 
 
