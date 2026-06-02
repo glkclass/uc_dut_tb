@@ -1,0 +1,13 @@
+--incr
+--relax
+--sv
+-d DUT_TB
+-d QUICK_INIT
+-L dutb=${DUTB_LIB_FOLDER}
+
+../${RTL_PATH}/common/oct640_cu_util_pkg.sv
+../${RTL_PATH}/core/ddr3_sm_core/ddr3_sm_core.sv
+../${RTL_PATH}/core/fake_proxy_board.v
+../${RTL_PATH}/core/sens_trigger_generator.v
+../${RTL_PATH}/core/mipi_csi_axis_streamer.v
+../${RTL_PATH}/core/sens_streamer.v

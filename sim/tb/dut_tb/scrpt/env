@@ -17,10 +17,11 @@ DUTB_LIB_FOLDER=../$(DUTB_PATH)/dutb_lib
 BUILD_FOLDER=build
 
 TOOLS_USED="Tools: $(VIVADO_TOOLS)"
-ECHO_HEADER=@echo -e "INFO: Make $@\t\ttime: $$(date +'%H:%M:%S')"
-ECHO_TOOLS_HEADER=@echo -e "INFO: Make $@\t\t$(TOOLS_USED)\t\ttime: $$(date +'%H:%M:%S')"
-ECHO_FOOTER=@echo -e "INFO: ..Finished\t\ttime: $$(date +'%H:%M:%S')\n"
 SETUP_TOOLS=@source $(VIVADO_TOOLS)/settings64.sh
+INFO_PREFIX="$$(date +'%H:%M:%S') INFO"
+ECHO_HEADER=@echo -e "$(INFO_PREFIX) | Make $@"
+ECHO_TOOLS_HEADER=@echo -e "$(INFO_PREFIX) | Make $@ | $(TOOLS_USED)"
+ECHO_FOOTER=@echo -e "$(INFO_PREFIX) | Make finished\n"
 
 VLOG_BIN_TOOL=xvlog
 VHDL_BIN_TOOL=xvhdl

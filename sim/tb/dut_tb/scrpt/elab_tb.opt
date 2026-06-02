@@ -1,0 +1,13 @@
+-incr
+--relax
+--mt 8
+--debug typical
+--timescale 1ps/1ps
+-L secureip
+-L simprims_ver
+-L dutb=${DUTB_LIB_FOLDER}
+--snapshot top_tb
+glbl
+ttb
+
+

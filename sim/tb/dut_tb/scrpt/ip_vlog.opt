@@ -1,0 +1,16 @@
+--incr
+--relax
+
+../${RTL_PATH}/ip/bram_2x2K_16_64/sim/bram_2x2K_16_64.v
+../${RTL_PATH}/ip/bram_2x4K_64_64/sim/bram_2x4K_64_64.v
+../${RTL_PATH}/ip/bram_2x128B_64_2/sim/bram_2x128B_64_2.v
+../${RTL_PATH}/ip/bram_2x2K_16_64/simulation/blk_mem_gen_v8_4.v
+../${IP_BD_GEN_PATH}/oct640_cu_clk_store_sys_0/oct640_cu_clk_store_sys_0.v
+../${IP_BD_GEN_PATH}/oct640_cu_clk_store_sys_0/oct640_cu_clk_store_sys_0_clk_wiz.v
+../${IP_BD_GEN_PATH}/oct640_cu_ddr3_sm_core_frontend_0/sim/oct640_cu_ddr3_sm_core_frontend_0.v
+../${IP_BD_GEN_PATH}/oct640_cu_ddr3_sm_core_request_handler_0/sim/oct640_cu_ddr3_sm_core_request_handler_0.v
+../${IP_BD_GEN_PATH}/oct640_cu_mipi_csi_axis_streamer_0/sim/oct640_cu_mipi_csi_axis_streamer_0.v
+../${IP_BD_GEN_PATH}/oct640_cu_sens_streamer_0/sim/oct640_cu_sens_streamer_0.v
+../${IP_BD_GEN_PATH}/oct640_cu_ips_demux_0/sim/oct640_cu_ips_demux_0.v
+../${IP_BD_GEN_PATH}/oct640_cu_pb_master_clk_mux_0/sim/oct640_cu_pb_master_clk_mux_0.v
+../${IP_BD_GEN_PATH}/oct640_cu_dbg_probe_mux_wrapper_0/sim/oct640_cu_dbg_probe_mux_wrapper_0.v

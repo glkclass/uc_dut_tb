@@ -1,0 +1,4 @@
+--incr
+--relax
+
+${VIVADO_TOOLS}/data/verilog/src/glbl.v

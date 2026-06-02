@@ -1,0 +1,21 @@
+--incr
+--relax
+-d DUT_TB
+-d QUICK_INIT
+-L dutb=${DUTB_LIB_FOLDER}
+
+../${RTL_PATH}/core/ila_wrapper.v
+../${RTL_PATH}/core/pb_master_clk_mux.v
+../${RTL_PATH}/core/ips_demux.v
+../${RTL_PATH}/core/dead_pixel_masker.v
+../${RTL_PATH}/core/auto_offset_contrast_range_calculator.v
+../${RTL_PATH}/core/contrast_range_stretch_param_caclulator.v
+../${RTL_PATH}/core/contrast_range_stretcher.v
+../${RTL_PATH}/core/proxy_board_status_checker.v
+../${RTL_PATH}/core/dbg_probe_mux_wrapper.v
+../${RTL_PATH}/core/ddr3_proxy_rw_request_if.v
+../${RTL_PATH}/core/ddr3_sm_core/ddr3_sm_core_request_handler.v
+../${RTL_PATH}/core/ddr3_sm_core/ddr3_sm_core_phy.v
+../${RTL_PATH}/core/ddr3_sm_core/ddr3_sm_core_frontend.v
+../${BD_GEN_PATH}/sim/oct640_cu.v
+

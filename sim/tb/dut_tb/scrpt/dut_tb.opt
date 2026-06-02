@@ -1,0 +1,16 @@
+--incr
+--relax
+--sv
+-L UVM
+-L dutb=${DUTB_LIB_FOLDER}
+-i ../${DUTB_PATH}/src
+-i ../${RTL_PATH}/common
+
+../${DUT_TB_PATH}/dut_tb_util_pkg.sv
+../${DUT_TB_PATH}/dut_if.sv
+../${DUT_TB_PATH}/dut_tb_pkg.sv
+../${DUT_TB_PATH}/ddr3.v
+../${DUT_TB_PATH}/ttb.sv
+
+
+

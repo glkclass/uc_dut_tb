@@ -1,0 +1,4 @@
+--incr
+--relax
+
+../${RTL_PATH}/ip/stretch_gain_divider/sim/stretch_gain_divider.vhd
