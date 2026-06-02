@@ -1,0 +1,44 @@
+# setup path to Xilins Vivado tools (may be redefined in .user_env)
+VIVADO_TOOLS=/tools/Xilinx/2025.1/Vivado
+
+# setup log file name (may be redefined in .user_env)
+TB_LOG=tb_scripts.log
+
+# All paths are relative to scrpt folder
+
+# project root path
+PROJECT_ROOT_PATH=../../../../../bitstream-mipi-usb
+# DTB root path
+ROOT_PATH=..
+# path to dutb lib
+DUTB_PATH=../../../../../../dutb
+DUTB_LIB_FOLDER=../$(DUTB_PATH)/dutb_lib
+
+BUILD_FOLDER=build
+
+TOOLS_USED="Tools: $(VIVADO_TOOLS)"
+ECHO_HEADER=@echo -e "INFO: Make $@\t\ttime: $$(date +'%H:%M:%S')"
+ECHO_TOOLS_HEADER=@echo -e "INFO: Make $@\t\t$(TOOLS_USED)\t\ttime: $$(date +'%H:%M:%S')"
+ECHO_FOOTER=@echo -e "INFO: ..Finished\t\ttime: $$(date +'%H:%M:%S')\n"
+SETUP_TOOLS=@source $(VIVADO_TOOLS)/settings64.sh
+
+VLOG_BIN_TOOL=xvlog
+VHDL_BIN_TOOL=xvhdl
+ELAB_BIN_TOOL=xelab
+SIM_BIN_TOOL=xsim
+
+
+RTL_PATH=$(PROJECT_ROOT_PATH)/rtl
+
+DUT_TB_PATH=$(ROOT_PATH)
+
+VIVADO_PROJECT_PATH=${PROJECT_ROOT_PATH}/syn/vivado_project
+# IP_GEN_PATH=${PROJECT_ROOT_PATH}/vivado_project.gen/sources_1/ip
+BD_GEN_PATH=$(VIVADO_PROJECT_PATH)/vivado_project.gen/sources_1/bd/oct640_cu
+IP_BD_GEN_PATH=$(BD_GEN_PATH)/ip
+
+
+# IMPL_NETLIST_FUNC=$(PROJECT_ROOT_PATH)/vivado_project/vivado_project.sim/sim_1/impl/func/xsim/oct640_am_bf_top_func_impl.v
+# IMPL_NETLIST_TIME=$(PROJECT_ROOT_PATH)/vivado_project/vivado_project.sim/sim_1/impl/timing/xsim/oct640_am_bf_top_time_impl.v
+# IMPL_SDF_TIME=$(PROJECT_ROOT_PATH)/vivado_project/vivado_project.sim/sim_1/impl/timing/xsim/oct640_am_bf_top_time_impl.sdf
+

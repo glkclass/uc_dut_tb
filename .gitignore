@@ -1,24 +1,46 @@
-### AL ###
-#Template for AL projects for Dynamics 365 Business Central
+user_env
+__pycache__
+rtl/ip/bram_2x128B_64_2/*
+!rtl/ip/bram_2x128B_64_2/*.xci
+
+rtl/ip/dist_bram_2x128B_64_64/*
+!rtl/ip/dist_bram_2x128B_64_64/*.xci
+
+rtl/ip/stretch_gain_divider/*
+!rtl/ip/stretch_gain_divider/*.xci
+
+rtl/ip/bram_2x4K_64_64/*
+!rtl/ip/bram_2x4K_64_64/*.xci
+
+rtl/ip/bram_2x2K_16_64/*
+!rtl/ip/bram_2x2K_16_64/*.xci
+
+rtl/ip/ila/*
+!rtl/ip/ila/*.xci
+
 
 runs
-#launch.json folder
-.vscode/
-#Cache folder
-.alcache/
-#Symbols folder
-.alpackages/
-#Snapshots folder
-.snapshots/
-#Testing Output folder
-.output/
-#Extension App-file
-*.app
-#Rapid Application Development File
-rad.json
-#Translation Base-file
-*.g.xlf
-#License-file
-*.flf
-#Test results file
-TestResults.xml
+fpga_firmware_commit_hash.vh
+README.html
+.Xil
+vivado_project*
+syn/vivado_project*
+
+sim/tb/dut_tb/scrpt/build/ttb.u_ram.open_bank_file.*
+scrpt/impl.tcl
+scrpt/synth.tcl
+scrpt/gen_gate_sim.tcl
+scrpt/gen_gate_sim_artefacts.tcl
+
+
+logs/
+*.jou
+*.log
+vivado_make.tcl
+xsim.dir
+*.pb
+*.vcd
+*.wdb
+run.tcl
+project.prj
+

@@ -1,0 +1,55 @@
+# path to folder to copy build artefacts to (should be redefined in .user_env)
+ART_BIN_FOLDER=path_2_bin_folder
+
+# num of jobs for vivado impl process (may be redefined in .user_env)
+N_JOBS=12
+
+# setup log (may be redefined in .user_env)
+LOG=scripts.log
+
+# setup path to Xilins Vivado tools (may be redefined in .user_env)
+VIVADO_TOOLS=/tools/Xilinx/2025.1/Vivado
+
+# setup what tools to use for 'program flash' or 'load fpga' tasks: vivado or vivado_lab
+VIVADO_BIN_TOOL=vivado_lab
+
+# project root path
+ROOT_PATH=..
+
+# path to folder containing microcode
+MC_ROOT_PATH=${ROOT_PATH}/mc
+
+# path to folder containing dut_tb
+DUT_TB_ROOT_PATH=${ROOT_PATH}/../oct640_cu_dut_tb/sim/tb/dut_tb
+
+TOOLS_USED="Tools: $(VIVADO_TOOLS)"
+SETUP_TOOLS=@source $(VIVADO_TOOLS)/settings64.sh
+INFO_PREFIX="$$(date +'%H:%M:%S') INFO"
+ECHO_HEADER=@echo -e "$(INFO_PREFIX) | Make $@"
+ECHO_TOOLS_HEADER=@echo -e "$(INFO_PREFIX) | Make $@ | $(TOOLS_USED)"
+ECHO_FOOTER=@echo -e "$(INFO_PREFIX) | Make finished\n"
+
+VIVADO_PROJECT_NAME=vivado_project
+VIVADO_PROJECT_FOLDER=../syn/${VIVADO_PROJECT_NAME}
+VIVADO_IMPORTS=../syn/imports
+VIVADO_DESIGN_NAME=oct640_cu
+VIVADO_DESIGN_TOP_NAME=${VIVADO_DESIGN_NAME}_top
+VIVADO_PROJECT_ELF_NAME=${VIVADO_DESIGN_TOP_NAME}_mc.elf
+VIVADO_PROJECT=${VIVADO_PROJECT_FOLDER}/${VIVADO_PROJECT_NAME}.xpr
+VIVADO_PROJECT_TOP_BD=${VIVADO_PROJECT_FOLDER}/${VIVADO_PROJECT_NAME}.srcs/sources_1/bd/${VIVADO_DESIGN_NAME}/${VIVADO_DESIGN_NAME}.bd
+VIVADO_PROJECT_IMPL_FOLDER=${VIVADO_PROJECT_FOLDER}/${VIVADO_PROJECT_NAME}.runs/impl_1
+VIVADO_PROJECT_CHECKPOINT_PATTERN=${VIVADO_PROJECT_FOLDER}/${VIVADO_PROJECT_NAME}.srcs/utils_1/imports/{synth_1, impl_1}/*.dcp
+VIVADO_XSA_PLATFORM_FILE=${VIVADO_PROJECT_FOLDER}/${VIVADO_DESIGN_TOP_NAME}.xsa
+
+VIVADO_DESIGN_CORE="core_sys/core/mblaze_core"
+
+VIVADO_BIT_STREAM=${VIVADO_PROJECT_IMPL_FOLDER}/${VIVADO_DESIGN_TOP_NAME}.bit
+VIVADO_BIN_STREAM=${VIVADO_PROJECT_IMPL_FOLDER}/${VIVADO_DESIGN_TOP_NAME}.bin
+
+# path to bin file used for 'program flash' tasks (maybe redefined in .user_env)
+PROGRAM_BIN_STREAM=${ART_BIN_FOLDER}/${VIVADO_DESIGN_TOP_NAME}.bin
+
+VIVADO_BIN_STREAM_SIZE=2
+FPGA_DEVICE=xc7a50t_0
+FLASH_DEVICE=mt25qu01g-spi-x1_x2_x4
+FLASH_SPI_INTERFACE=SPIx4

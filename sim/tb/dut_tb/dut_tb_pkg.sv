@@ -15,9 +15,9 @@ package dut_tb_pkg;
     import dutb_util_pkg::*;
     import dutb_pkg::*;
 
-    import oct640_am_util_pkg::*;
+    import oct640_cu_util_pkg::*;
 
-    `include "../../../rtl/common/mc_const.vh"
+    `include "mc_const.vh"
 
     // UVM infra
     `include "uvm_infra/dut_if_proxy.svh"

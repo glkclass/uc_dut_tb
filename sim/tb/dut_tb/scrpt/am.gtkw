@@ -1,25 +1,24 @@
 [*]
 [*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
-[*] Thu Jan  8 17:39:48 2026
+[*] Wed May 27 14:43:38 2026
 [*]
-[dumpfile] "/home/anton.voloshchuk/design/oct640_am/oct640_am_hw/scrpt/wf.vcd"
-[dumpfile_mtime] "Thu Jan  8 17:35:46 2026"
-[dumpfile_size] 91553023
-[savefile] "/home/anton.voloshchuk/design/oct640_am/oct640_am_hw/scrpt/am.gtkw"
-[timestart] 108961900
+[dumpfile] "/home/anton.voloshchuk/design/oct640_cu/oct640_cu_dut_tb/sim/tb/dut_tb/scrpt/build/wf.vcd"
+[dumpfile_mtime] "Wed May 27 11:01:26 2026"
+[dumpfile_size] 110687590
+[savefile] "/home/anton.voloshchuk/design/oct640_cu/oct640_cu_dut_tb/sim/tb/dut_tb/scrpt/am.gtkw"
+[timestart] 0
 [size] 2558 1365
 [pos] -1 -1
-*-17.483984 110194021 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-20.483984 6451172 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] ttb.
-[treeopen] ttb.dut_if_h.
 [treeopen] ttb.u_ipp.
-[treeopen] ttb.u_ipp.ddr3_sm_core_frontend.
 [treeopen] ttb.u_ipp.ddr3_sm_core_frontend.inst.
 [treeopen] ttb.u_ipp.ddr3_sm_core_request_handler.
+[treeopen] ttb.u_ipp.mipi_csi_axis_streamer.
 [treeopen] ttb.u_ipp.sens_streamer.
 [treeopen] ttb.u_ipp.sens_streamer.inst.
-[sst_width] 315
-[signals_width] 420
+[sst_width] 318
+[signals_width] 416
 [sst_expanded] 1
 [sst_vpaned_height] 670
 @c00200
@@ -66,43 +65,53 @@ ttb.u_ipp.ref_clk
 -clk
 @200
 -
-@c00200
+@800200
 -sens streamer
 @200
 -
+@c00201
+-trigger
+@200
+-
+@1401201
+-trigger
 @c00200
--trigger
+-pb_status_checker
 @28
-ttb.u_ipp.sens_streamer.inst.i_sens_trigger.i_rst_n
-ttb.u_ipp.sens_streamer.inst.i_sens_trigger.i_sensor_pixel_clk
-ttb.u_ipp.sens_streamer.inst.i_sens_trigger.en
-ttb.u_ipp.sens_streamer.i_trigger
-ttb.u_ipp.sens_streamer.inst.i_sens_trigger.trigger_lpf
-ttb.u_ipp.sens_streamer.inst.i_sens_trigger.trigger_lpf_fe
-ttb.u_ipp.sens_streamer.inst.i_sens_trigger.trigger_lpf_low_strobe
-ttb.u_ipp.sens_streamer.inst.i_sens_trigger.o_sensor_trigger
+ttb.u_ipp.sens_streamer.inst.i_proxy_board_status_checker.i_sys_rst_n
+ttb.u_ipp.sens_streamer.inst.i_proxy_board_status_checker.i_sys_clk
+ttb.u_ipp.sens_streamer.inst.i_proxy_board_status_checker.i_sensor_pixel_clk
+ttb.u_ipp.sens_streamer.inst.i_proxy_board_status_checker.o_sensor_pixel_clk_active
 @200
 -
+@28
+ttb.u_ipp.sens_streamer.inst.i_proxy_board_status_checker.pixel_clk_active
+ttb.u_ipp.sens_streamer.inst.i_proxy_board_status_checker.pixel_clk_cnt[1:0]
+ttb.u_ipp.sens_streamer.inst.i_proxy_board_status_checker.strobe_re
+@22
+ttb.u_ipp.sens_streamer.inst.i_proxy_board_status_checker.sys_clk_cnt[6:0]
 @1401200
--trigger
-@200
--
--
+-pb_status_checker
 @c00200
 -pb_if
 @28
 ttb.proxy_board_master_clk
-@24
-ttb.u_ipp.proxy_board_pixel_clk
+ttb.u_ipp.sens_streamer.inst.sensor_pixel_clk
+@22
+ttb.u_ipp.sens_streamer.inst.sensor_pixel_clk_cnt[31:0]
 @28
-ttb.u_ipp.sens_streamer.sens_trigger
-@24
-ttb.u_ipp.proxy_board_sens_hsync
-ttb.u_ipp.proxy_board_sens_vsync
+ttb.u_ipp.sens_streamer.inst.sensor_trigger
+@22
+ttb.u_ipp.sens_streamer.inst.sensor_pixel[15:0]
+@28
+ttb.u_ipp.sens_streamer.inst.sensor_vsync
+ttb.u_ipp.sens_streamer.inst.sensor_hsync
+@200
+-
+@22
+ttb.u_ipp.sens_streamer.sens_img_frame_number[31:0]
 @28
 ttb.u_ipp.sens_streamer.inst.frame_start
-@22
-ttb.u_ipp.proxy_board_sens_pixel[15:0]
 @1401200
 -pb_if
 @c00200
@@ -271,15 +280,6 @@ ttb.u_ipp.sens_streamer.inst.bbl_acc_en
 -pixel_rx
 @c00200
 -pixel tx
-@22
-ttb.u_ipp.sens_streamer.inst.sens_img_frame_number[15:0]
-ttb.u_ipp.sens_streamer.inst.sens_img_row_number[8:0]
-@28
-ttb.u_ipp.sens_streamer.inst.sens_img_row_ready
-ttb.u_ipp.sens_streamer.inst.sens_img_frame_start
-@22
-ttb.u_ipp.sens_streamer.inst.sens_img_ram_addr[7:0]
-ttb.u_ipp.sens_streamer.inst.sens_img_ram_data[63:0]
 @1401200
 -pixel tx
 @c00200
@@ -377,12 +377,12 @@ ttb.u_ipp.sens_streamer.inst.u_dead_pixel_masker.line_start_pixel[15:0]
 -dead_pixel_masker
 @200
 -
-@1401200
+@1000200
 -sens streamer
 @200
 -
 -
-@800200
+@c00200
 -sm core request handler
 @28
 ttb.u_ipp.ddr3_sm_core_request_handler.inst.i_sys_clk
@@ -410,21 +410,22 @@ ttb.u_ipp.ddr3_sm_core_request_handler.inst.pr_state[2:0]
 -
 @28
 ttb.u_ipp.ddr3_sm_core_request_handler.inst.wdt_en
-@29
 ttb.u_ipp.ddr3_sm_core_request_handler.inst.wdt_over
 @22
 ttb.u_ipp.ddr3_sm_core_request_handler.inst.wdt[4:0]
 @200
 -
-@1000200
+@1401200
 -sm core request handler
 @200
 -
-@c00200
+@800200
 -csi streamer
 @28
 ttb.u_ipp.mipi_csi_axis_streamer.inst.i_rst_n
 ttb.u_ipp.mipi_csi_axis_streamer.inst.i_sys_clk
+ttb.u_ipp.mipi_csi_axis_streamer.inst.i_disable
+ttb.u_ipp.mipi_csi_axis_streamer.inst.disable_stream
 @200
 -
 @22
@@ -827,7 +828,7 @@ ttb.u_ipp.mipi_csi_axis_streamer.inst.mipi_csi_axis_tlast
 ttb.u_ipp.mipi_csi_axis_streamer.inst.mipi_csi_data_type[5:0]
 @24
 ttb.u_ipp.mipi_csi_axis_streamer.inst.mipi_csi_word_count[15:0]
-@1401200
+@1000200
 -csi streamer
 @200
 -

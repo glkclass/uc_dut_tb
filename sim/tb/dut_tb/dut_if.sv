@@ -6,19 +6,19 @@
 ******************************************************************************************************************************/
 
 
-import oct640_am_util_pkg::COEFF_A_W;
-import oct640_am_util_pkg::COEFF_B_W;
+import oct640_cu_util_pkg::COEFF_A_W;
+import oct640_cu_util_pkg::COEFF_B_W;
 
-import oct640_am_util_pkg::IMAGE_PIXEL_W;
-import oct640_am_util_pkg::AXIS_DATA_W;
+import oct640_cu_util_pkg::IMAGE_PIXEL_W;
+import oct640_cu_util_pkg::AXIS_DATA_W;
 
-import oct640_am_util_pkg::RAM_DATA_W;
+import oct640_cu_util_pkg::RAM_DATA_W;
 
-import oct640_am_util_pkg::DDR3_ROW_ADDR_W;
-import oct640_am_util_pkg::DDR3_COL_W;
-import oct640_am_util_pkg::BST_SIZE_W;
-import oct640_am_util_pkg::BST_NUM_W;
-import oct640_am_util_pkg::DDR3_DQ_W;
+import oct640_cu_util_pkg::DDR3_ROW_ADDR_W;
+import oct640_cu_util_pkg::DDR3_COL_W;
+import oct640_cu_util_pkg::BST_SIZE_W;
+import oct640_cu_util_pkg::BST_NUM_W;
+import oct640_cu_util_pkg::DDR3_DQ_W;
 
 // ****************************************************************************************************************************
 interface dut_if (

@@ -20,7 +20,7 @@ package dut_tb_util_pkg;
         T_CLK_72_25MHZ_PERIOD   = 13468ps,
         T_CLK_27MHZ_PERIOD      = 37ns,
         T_RST_N_LEN             = 3us,
-        T_TEST_LEN              = 1000us;
+        T_TEST_LEN              = 2000us;
 
 
     typedef     logic[15:0]                                 t_pixel;

@@ -11,7 +11,7 @@ module ttb;
     `include "uvm_macros.svh"
     `include "dut_tb_macros.svh"
 
-    `include "../../../rtl/common/mc_const.vh"
+    `include "mc_const.vh"
 
     import uvm_pkg::*;
 
@@ -23,12 +23,12 @@ module ttb;
     import dut_tb_util_pkg::T_CLK_72_25MHZ_PERIOD;
     import dut_tb_util_pkg::T_RST_N_LEN;
 
-    import oct640_am_util_pkg::IMAGE_PIXEL_W;
+    import oct640_cu_util_pkg::IMAGE_PIXEL_W;
 
-    import oct640_am_util_pkg::DDR3_BANK_W;
-    import oct640_am_util_pkg::DDR3_ROW_W;
-    import oct640_am_util_pkg::DDR3_DQ_W;
-    import oct640_am_util_pkg::DDR3_DM_W;
+    import oct640_cu_util_pkg::DDR3_BANK_W;
+    import oct640_cu_util_pkg::DDR3_ROW_W;
+    import oct640_cu_util_pkg::DDR3_DQ_W;
+    import oct640_cu_util_pkg::DDR3_DM_W;
 
 
     wire                                        ddr3_reset_n;
@@ -53,10 +53,10 @@ module ttb;
 
 // wires
     logic                       proxy_board_pixel_clk;
-    logic                       proxy_board_hsync;
-    logic                       proxy_board_vsync;
-    logic [IMAGE_PIXEL_W-1:0]   proxy_board_pixel;
-    logic                       proxy_board_trigger;
+    logic                       proxy_board_sens_hsync;
+    logic                       proxy_board_sens_vsync;
+    logic [IMAGE_PIXEL_W-1:0]   proxy_board_sens_pixel;
+    logic                       proxy_board_sens_trigger;
     logic                       sensor_sck;
     logic                       sensor_cs_n;
     logic                       sensor_mosi;
@@ -112,16 +112,33 @@ module ttb;
     logic   [16 - 1      :   0]         ips;
     logic   [18 - 1     :   0]          coeff_table_ddr3_base_addr  = `DDR3_MEMORY_CYCLIC_COEFF_TABLE_BASE_ADDR >> 11;
 
-    assign ips = {dut_if_h.pb_vif.trigger_in, 15'd1};
+
+    assign ips[`IPS_PP_TYPE_OFFS + `IPS_PP_TYPE_WIDTH - 1    :   `IPS_PP_TYPE_OFFS] = `IPS_PP_RAW_IMAGE;
+    assign ips[`IPS_FR_TYPE_OFFS] = `IPS_FR_30;
+    assign ips[`IPS_DEAD_PIXEL_MASK_DIS_OFFS] = 1'b1;
+    assign ips[`IPS_TRIGGER_DIS_OFFS] = 1'b1;
+
+    assign ips[`IPS_FLASHING_LED_DIS_OFFS] = 1'b0;
+    assign ips[`IPS_SOFT_TRIGGER_OFFS] = 1'b0;
+
+
+initial
+    begin
+        ips[`IPS_MIPI_CSI_STREAM_DIS_OFFS] = 1'b0;
+        #700us
+        ips[`IPS_MIPI_CSI_STREAM_DIS_OFFS] = 1'b1;
+        #700us
+        ips[`IPS_MIPI_CSI_STREAM_DIS_OFFS] = 1'b0;
+    end
 
 
     // sensor pb if
     assign proxy_board_pixel_clk                                =   dut_if_h.pb_vif.pixel_clk;
-    assign proxy_board_hsync                                    =   dut_if_h.pb_vif.hsync;
-    assign proxy_board_vsync                                    =   dut_if_h.pb_vif.vsync;
-    assign proxy_board_pixel                                    =   dut_if_h.pb_vif.data;
+    assign proxy_board_sens_hsync                               =   dut_if_h.pb_vif.hsync;
+    assign proxy_board_sens_vsync                               =   dut_if_h.pb_vif.vsync;
+    assign proxy_board_sens_pixel                               =   dut_if_h.pb_vif.data;
     assign dut_if_h.pb_vif.master_clk                           =   proxy_board_master_clk;
-    assign dut_if_h.pb_vif.trigger_out                          =   proxy_board_trigger;
+    assign dut_if_h.pb_vif.trigger_out                          =   proxy_board_sens_trigger;
 
     // mipi csi axis if
     assign u_ipp.mipi_csi_axis_tready                           =   dut_if_h.csi_vif.axis_tready;
@@ -178,7 +195,7 @@ module ttb;
     assign dut_if_h.sns_rd_coeff_vif.coeff_b                    =   u_ipp.sens_streamer.inst.coeff_b                ;
 
 
-oct640_am_clk_store_sys_0 clk_store_sys
+oct640_cu_clk_store_sys_0 clk_store_sys
    (.clk_in1(clk_74_25_mhz),
     .clk_out1(clk_store_sys_clk_out1),
     .clk_out2(clk_store_sys_clk_out2),
@@ -190,69 +207,74 @@ oct640_am_clk_store_sys_0 clk_store_sys
     .locked(clk_store_sys_locked));
 
 
-image_processing_pipeline_imp_YUBQ36 u_ipp (
-    .core_sys_rw_port_bram_addr                 (),
-    .core_sys_rw_port_bram_clk                  (),
-    .core_sys_rw_port_bram_din                  (),
-    .core_sys_rw_port_bram_dout                 (),
-    .core_sys_rw_port_bram_en                   (),
-    .core_sys_rw_port_bram_we                   (),
-    .core_sys_rw_port_req_bl8_offs              (),
-    .core_sys_rw_port_req_burst_num             (),
-    .core_sys_rw_port_req_burst_size            (),
-    .core_sys_rw_port_req_rdreq                 (),
-    .core_sys_rw_port_req_rdbusy                (),
-    .core_sys_rw_port_req_row_base_addr         (),
-    .core_sys_rw_port_req_wrreq                 (),
-    .core_sys_rw_port_req_wrbusy                (),
-    .ddr3_addr                                  (ddr3_addr                                  ),
-    .ddr3_ba                                    (ddr3_ba                                    ),
-    .ddr3_cas_n                                 (ddr3_cas_n                                 ),
-    .ddr3_ck_n                                  (ddr3_ck_n                                  ),
-    .ddr3_ck_p                                  (ddr3_ck_p                                  ),
-    .ddr3_cke                                   (ddr3_cke                                   ),
-    .ddr3_cs_n                                  (ddr3_cs_n                                  ),
-    .ddr3_dm                                    (ddr3_dm                                    ),
-    .ddr3_dq                                    (ddr3_dq                                    ),
-    .ddr3_dqs_n                                 (ddr3_dqs_n                                 ),
-    .ddr3_dqs_p                                 (ddr3_dqs_p                                 ),
-    .ddr3_odt                                   (ddr3_odt                                   ),
-    .ddr3_ras_n                                 (ddr3_ras_n                                 ),
-    .ddr3_reset_n                               (ddr3_reset_n                               ),
-    .ddr3_we_n                                  (ddr3_we_n                                  ),
-    .ddr3_proxy_bram_mntr_addr                  (),
-    .ddr3_proxy_bram_mntr_clk                   (),
-    .ddr3_proxy_bram_mntr_din                   (),
-    .ddr3_proxy_bram_mntr_dout                  (),
-    .ddr3_proxy_bram_mntr_en                    (),
-    .ddr3_proxy_bram_mntr_rst                   (),
-    .ddr3_proxy_bram_mntr_we                    (),
-    .ddr_270_clk                                (clk_store_sys_clk_out5                     ),
-    .ddr_clk                                    (clk_store_sys_clk_out4                     ),
-    .coeff_table_ddr3_base_addr                 (coeff_table_ddr3_base_addr                 ),
-    .ips                                        (ips                                        ),
-    .trigger                                    (dut_if_h.pb_vif.trigger_in                 ),
-    .fr30_clk                                   (clk_store_sys_clk_out6                     ),
-    .fr60_clk                                   (clk_store_sys_clk_out7                     ),
-    .pb_master_clk                              (proxy_board_master_clk                     ),
-    .mipi_csi_axis_tdata                        (),
-    .mipi_csi_axis_tdest                        (),
-    .mipi_csi_axis_tkeep                        (),
-    .mipi_csi_axis_tlast                        (),
-    .mipi_csi_axis_tready                       (),
-    .mipi_csi_axis_tuser                        (),
-    .mipi_csi_axis_tvalid                       (),
-    .proxy_board_sens_hsync                     (proxy_board_hsync                          ),
-    .proxy_board_sens_pixel                     (proxy_board_pixel                          ),
-    .proxy_board_sens_trigger                   (proxy_board_trigger                        ),
-    .proxy_board_sens_vsync                     (proxy_board_vsync                          ),
-    .ref_clk                                    (clk_store_sys_clk_out1                     ),
-    .sys_rst_n                                  (rst_n                                      ),
-    .sensor_pixel_rst_n                         (rst_n                                      ),
-    .proxy_board_pixel_clk                      (proxy_board_pixel_clk                      ),
-    .sys_clk                                    (clk_store_sys_clk_out2                     ),
-    .sys_135_clk                                (clk_store_sys_clk_out3                     )
-);
+  image_processing_pipeline_imp_PQRLL2 u_ipp (
+        .bba(),
+        .coeff_table_ddr3_base_addr(coeff_table_ddr3_base_addr),
+        .core_sys_rw_port_bram_addr(),
+        .core_sys_rw_port_bram_clk(),
+        .core_sys_rw_port_bram_din(),
+        .core_sys_rw_port_bram_dout(),
+        .core_sys_rw_port_bram_en(),
+        .core_sys_rw_port_bram_we(),
+        .core_sys_rw_port_req_bl8_offs(),
+        .core_sys_rw_port_req_burst_num(),
+        .core_sys_rw_port_req_burst_size(),
+        .core_sys_rw_port_req_rdbusy(),
+        .core_sys_rw_port_req_rdreq(),
+        .core_sys_rw_port_req_row_base_addr(),
+        .core_sys_rw_port_req_wrbusy(),
+        .core_sys_rw_port_req_wrreq(),
+        .ips_mipi_csi_phy_rst(),
+        .dbg_probe_mc_in_0(),
+        .dbg_probe_mc_in_2(),
+        .ddr3_addr(ddr3_addr),
+        .ddr3_ba(ddr3_ba),
+        .ddr3_cas_n(ddr3_cas_n),
+        .ddr3_ck_n(ddr3_ck_n),
+        .ddr3_ck_p(ddr3_ck_p),
+        .ddr3_cke(ddr3_cke),
+        .ddr3_cs_n(ddr3_cs_n),
+        .ddr3_dm(ddr3_dm),
+        .ddr3_dq(ddr3_dq),
+        .ddr3_dqs_n(ddr3_dqs_n),
+        .ddr3_dqs_p(ddr3_dqs_p),
+        .ddr3_odt(ddr3_odt),
+        .ddr3_proxy_bram_mntr_addr(),
+        .ddr3_proxy_bram_mntr_clk(),
+        .ddr3_proxy_bram_mntr_din(),
+        .ddr3_proxy_bram_mntr_dout(),
+        .ddr3_proxy_bram_mntr_en(),
+        .ddr3_proxy_bram_mntr_rst(),
+        .ddr3_proxy_bram_mntr_we(),
+        .ddr3_ras_n(ddr3_ras_n),
+        .ddr3_reset_n(ddr3_reset_n),
+        .ddr3_we_n(ddr3_we_n),
+        .ddr_270_clk(clk_store_sys_clk_out5),
+        .ddr_clk(clk_store_sys_clk_out4),
+        .fr30_clk(clk_store_sys_clk_out6),
+        .fr60_clk(clk_store_sys_clk_out7),
+        .ips(ips),
+        .ipst(),
+        .mipi_csi_axis_tdata(),
+        .mipi_csi_axis_tdest(),
+        .mipi_csi_axis_tkeep(),
+        .mipi_csi_axis_tlast(),
+        .mipi_csi_axis_tready(),
+        .mipi_csi_axis_tuser(),
+        .mipi_csi_axis_tvalid(),
+        .o_led(),
+        .pb_master_clk(proxy_board_master_clk),
+        .proxy_board_pixel_clk(proxy_board_pixel_clk),
+        .proxy_board_sens_hsync(proxy_board_sens_hsync),
+        .proxy_board_sens_pixel(proxy_board_sens_pixel),
+        .proxy_board_sens_trigger(proxy_board_sens_trigger),
+        .proxy_board_sens_vsync(proxy_board_sens_vsync),
+        .ref_clk(clk_store_sys_clk_out1),
+        .sens_img_frame_number(),
+        .sys_135_clk(clk_store_sys_clk_out3),
+        .sys_clk(clk_store_sys_clk_out2),
+        .sys_rst_n(rst_n),
+        .trigger(dut_if_h.pb_vif.trigger_in));
 
 
 wire ddr3_ck_p_1 = ddr3_ck_p;
