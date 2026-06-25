@@ -21,7 +21,7 @@ LOG  := ${PWD_PATH}/${LOG}
 
 # debug: clean_log impl generate_bitstream copy_bin_file
 # debug: clean_log mc_create_release_project mc_copy_elf_file
-debug: clean_log synth
+debug: program_uart_flash
 	$(ECHO_HEADER)
 	$(SETUP_TOOLS)
 # 	source vivado_cli.sh -t $@
@@ -54,7 +54,7 @@ build_mc_gen_hw_bin: clean_log mc_build_app mc_copy_elf_file generate_bitstream 
 build_mc_gen_hw_bin_load_fpga: clean_log build_mc_gen_hw_bin load_fpga
 build_mc_gen_hw_bin_program_flash: clean_log build_mc_gen_hw_bin program_flash
 
-create_mc_gen_hw_bin: clean_log mc_create_release_project mc_copy_elf_file impl generate_bitstream copy_bin_file
+create_mc_gen_hw_bin: clean_log mc_create_release_project mc_copy_elf_file generate_bitstream copy_bin_file
 
 build_release_soc: clean_log synth generate_platform mc_create_release_project mc_copy_elf_file impl generate_bitstream copy_bin_file
 build_debug_soc: clean_log synth generate_platform mc_create_debug_project mc_copy_elf_file impl generate_bitstream copy_bin_file
@@ -140,13 +140,19 @@ create_vivado_project: clean
 	source vivado_cli.sh -t $@
 	$(ECHO_FOOTER)
 
+synth:
+	$(ECHO_TOOLS_HEADER)
+	$(SETUP_TOOLS)
+	source vivado_cli.sh -t $@
+	$(ECHO_FOOTER)
+
 impl:
 	$(ECHO_TOOLS_HEADER)
 	$(SETUP_TOOLS)
 	source vivado_cli.sh -t $@
 	$(ECHO_FOOTER)
 
-synth:
+generate_impl_artefacts:
 	$(ECHO_TOOLS_HEADER)
 	$(SETUP_TOOLS)
 	source vivado_cli.sh -t $@
@@ -167,7 +173,8 @@ generate_bitstream:
 copy_bin_file:
 	$(ECHO_HEADER)
 	$(SETUP_TOOLS)
-	source vivado_cli.sh -t $@
+	echo "INFO | Copy ${VIVADO_BIN_STREAM} to ${ART_BIN_FOLDER}"
+	cp -r ${VIVADO_BIN_STREAM} ${ART_BIN_FOLDER}
 	$(ECHO_FOOTER)
 
 load_fpga:
@@ -176,13 +183,11 @@ load_fpga:
 	source vivado_cli.sh -t $@
 	$(ECHO_FOOTER)
 
-
 program_flash:
 	$(ECHO_HEADER)
 	$(SETUP_TOOLS)
 	source vivado_cli.sh -t program_flash
 	$(ECHO_FOOTER)
-
 
 program_n_flash: clean_log
 	$(ECHO_HEADER)
@@ -190,9 +195,16 @@ program_n_flash: clean_log
 	source vivado_cli.sh -t program_n_flash
 	$(ECHO_FOOTER)
 
-
 hw_debug: clean_log
 	$(ECHO_HEADER)
 	$(SETUP_TOOLS)
 	source vivado_cli.sh -t debug
+	$(ECHO_FOOTER)
+
+# py rules
+program_uart_flash:
+	$(ECHO_HEADER)
+	$(SETUP_TOOLS)
+	@cd ${AM_SERIAL_SCRIPTS_ROOT_PATH}
+	python3 am_serial_fc.py --flash_type Config --file ${abspath ${PROGRAM_BIN_STREAM}} --port ${AM_SERIAL_PORT}
 	$(ECHO_FOOTER)

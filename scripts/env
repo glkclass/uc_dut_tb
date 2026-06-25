@@ -22,6 +22,11 @@ MC_ROOT_PATH=${ROOT_PATH}/mc
 # path to folder containing dut_tb
 DUT_TB_ROOT_PATH=${ROOT_PATH}/../oct640_cu_dut_tb/sim/tb/dut_tb
 
+# path to folder containing am_serial_scripts
+AM_SERIAL_SCRIPTS_ROOT_PATH=${ROOT_PATH}/../am_serial_scripts
+# port for am_serila_scripts communication
+AM_SERIAL_PORT=/dev/ttyUSB0
+
 TOOLS_USED="Tools: $(VIVADO_TOOLS)"
 SETUP_TOOLS=@source $(VIVADO_TOOLS)/settings64.sh
 INFO_PREFIX="$$(date +'%H:%M:%S') INFO"
@@ -52,4 +57,6 @@ PROGRAM_BIN_STREAM=${ART_BIN_FOLDER}/${VIVADO_DESIGN_TOP_NAME}.bin
 VIVADO_BIN_STREAM_SIZE=2
 FPGA_DEVICE=xc7a50t_0
 FLASH_DEVICE=mt25qu01g-spi-x1_x2_x4
+
+# Options: SPIx4 - mt25xxx flash used in x4 mode, SPIx1 - mx66xxx flash used in x1 mode
 FLASH_SPI_INTERFACE=SPIx4

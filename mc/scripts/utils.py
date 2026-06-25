@@ -10,6 +10,8 @@ from env_vars import (
     ART_ELF_FOLDER,
     MC_APP_ELF_FILE_NAME,
     MC_FIRMWARE_GITVERSION_HEADER,
+    MC_FIRMWARE_FLASH_TYPE_HEADER,
+    FLASH_SPI_INTERFACE,
     VITIS_APP_ELF_FILE,
 )
 
@@ -23,8 +25,15 @@ logging.basicConfig(
 log = logging.getLogger()
 
 
-def generate_gitversion_header():
+def generate_flash_type_header():
+    with open(MC_FIRMWARE_FLASH_TYPE_HEADER, "w") as f:
+        if "SPIx4" == FLASH_SPI_INTERFACE:
+            f.write(f"#define FLASH_SPIX4\n")
+        elif "SPIx1" == FLASH_SPI_INTERFACE:
+            f.write(f"#define FLASH_SPIX1\n")
 
+
+def generate_gitversion_header():
     clean_env = os.environ.copy()
     spoiled_vars = ["LD_LIBRARY_PATH", "LIBRARY_PATH", "PYTHONPATH"]
     for var in spoiled_vars:
@@ -73,7 +82,7 @@ def check_log_errors(args):
     """
     Check log for errors. Exit with error code if errors are found.
     """
-    regex_pattern = r"((\[ERROR\])|(AssertionError)).*"
+    regex_pattern = r"(( ERROR )|(\[ERROR\])|(FAILED:)|(AssertionError)).*"
     pattern = re.compile(regex_pattern)
     num_errors = 0
     with open(args.log_file, "r") as file:

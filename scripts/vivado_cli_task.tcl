@@ -2,7 +2,7 @@ set CREATE_TOP_BD_TCL create_top_bd.tcl
 set CREATE_PROJECT_TCL create_vivado_project.tcl
 set ELF_FILE $env(VIVADO_IMPORTS)/$env(VIVADO_PROJECT_ELF_NAME)
 
-set TASKS {print_hw_targets create_vivado_project update_vivado_project add_block_design synth impl generate_platform generate_bitstream load_fpga program_flash debug}
+set TASKS {print_hw_targets create_vivado_project update_vivado_project add_block_design customize_config_flash synth impl generate_impl_artefacts generate_platform generate_bitstream load_fpga program_flash debug}
 
 
 # Debug stuff
@@ -39,6 +39,24 @@ proc add_block_design { args_list } {
     global env CREATE_TOP_BD_TCL
     open_project $env(VIVADO_PROJECT)
     source $CREATE_TOP_BD_TCL
+}
+
+
+# Create block design and add it to project
+proc customize_config_flash { args_list } {
+    global env
+    open_project $env(VIVADO_PROJECT)
+    open_bd_design $env(VIVADO_PROJECT_TOP_BD)
+    set config_flash_spi_w [lindex $args_list 1]
+    if {$config_flash_spi_w == "SPIx4"} {
+        set_property CONFIG.C_SPI_MEMORY {2} [get_bd_cells core_sys/config_flash_spi]
+        set_property CONFIG.C_SPI_MODE {2} [get_bd_cells core_sys/config_flash_spi]
+        set_property CONFIG.C_FIFO_DEPTH {256} [get_bd_cells core_sys/config_flash_spi]
+    } elseif {$config_flash_spi_w == "SPIx1"} {
+        set_property CONFIG.C_SPI_MODE {0} [get_bd_cells core_sys/config_flash_spi]
+        set_property CONFIG.C_FIFO_DEPTH {256} [get_bd_cells core_sys/config_flash_spi]
+    }
+    save_bd_design
 }
 
 
@@ -113,16 +131,6 @@ proc add_elf_file {} {
 }
 
 
-# generate xsa platform file
-proc generate_platform { args_list } {
-    global env
-    open_project $env(VIVADO_PROJECT)
-    open_bd_design $env(VIVADO_PROJECT_TOP_BD)
-    write_hw_platform -fixed -force -file $env(VIVADO_XSA_PLATFORM_FILE)
-    close_project
-}
-
-
 # run synthesis
 proc synth { args_list } {
     global env
@@ -135,6 +143,16 @@ proc synth { args_list } {
     launch_runs synth_1 -jobs $env(N_JOBS)
     wait_on_run synth_1
 
+    close_project
+}
+
+
+# generate xsa platform file
+proc generate_platform { args_list } {
+    global env
+    open_project $env(VIVADO_PROJECT)
+    open_bd_design $env(VIVADO_PROJECT_TOP_BD)
+    write_hw_platform -fixed -force -file $env(VIVADO_XSA_PLATFORM_FILE)
     close_project
 }
 
@@ -154,6 +172,21 @@ proc impl { args_list } {
     launch_runs impl_1 -jobs $env(N_JOBS)
     wait_on_run impl_1
 
+    close_project
+}
+
+
+# Generate post-implementation artefacts (func and time netlists, sdf files, ..)
+proc generate_impl_artefacts { args_list } {
+    global env
+    open_project $env(VIVADO_PROJECT)
+    # loop on IP which are not BD cells
+    foreach ip [get_ips -filter {IS_BD_CONTEXT != "Yes"}] {
+        set ip_file_name [get_property IP_FILE $ip]
+        reset_target all [get_files  $ip_file_name]
+        export_ip_user_files -of_objects  [get_files  $ip_file_name] -sync -no_script -force -quiet
+        generate_target all [get_files  $ip_file_name]
+    }
     close_project
 }
 

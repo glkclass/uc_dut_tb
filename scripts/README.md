@@ -2,12 +2,13 @@
 
 ### Setup:
 
-- Create `<repo>/scripts/.user_env` file to contain customized env variables in case of need. For details see `.env` file containing default values of env variables. Something like this:
+- Create `<repo>/scripts/user_env` file to contain customized env variables if needed. For details see `env` file containing default values of env variables. Something like this:
 ```
 XILINX_TOOLS_PATH=path_2_xilinx_tools
 PROGRAM_BIN_STREAM=path_2_program_bin_file
 ART_BIN_FOLDER=path_2_artefact_folder
 N_JOBS=8
+FLASH_SPI_INTERFACE=SPIx1
 ...
 ```
 
@@ -27,7 +28,7 @@ N_JOBS=8
 
 - Task 3: Program flash of N Processing boards via N jtag connections in parallel.
 
-1. Setup environment in .user_env
+1. Setup environment in user_env
 ```
 XILINX_TOOLS_PATH=path_2_xilinx_tools
 PROGRAM_BIN_STREAM=path_2_program_bin_file

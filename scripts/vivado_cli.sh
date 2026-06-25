@@ -4,15 +4,31 @@ root_path=".."
 
 # TODO: report_utilization
 
-TASKS=("debug" "git_clean" "create_vivado_project" "update_vivado_project" "refresh_project" "synth" "impl" "generate_platform" "generate_impl_artefacts" "generate_bitstream" "copy_bin_file" "load_fpga" "program_flash" "program_n_flash")
+tasks=("debug" "create_vivado_project" "update_vivado_project" "synth" "generate_bitstream" "impl" "generate_impl_artefacts" "generate_platform" "load_fpga" "program_flash" "program_n_flash")
+
+declare -A task_desc
+task_desc[debug]="Debug"
+task_desc[create_vivado_project]="Vivado. Create project."
+task_desc[update_vivado_project]="Vivado. Update project: generate 2 tcl scripts used to create project and block design in future from scratch"
+task_desc[synth]="Vivado. Run synthesis"
+task_desc[generate_bitstream]="Vivado. Generate bitstreams: *.bit & *.bin"
+task_desc[impl]="Vivado. Run implementation"
+task_desc[generate_impl_artefacts]="Vivado. Generate post-implementation artefacts (func and time netlists, sdf files, ..)"
+task_desc[generate_platform]="Vivado. Generate platform xsa file"
+task_desc[load_fpga]="Vivado. Load fpga. Bit file: $VIVADO_BIT_STREAM"
+task_desc[program_flash]="Vivado. Program config flash. Bin file: $PROGRAM_BIN_STREAM"
+task_desc[program_n_flash]="Vivado. Program N config flashes. Bin file: $PROGRAM_BIN_STREAM"
+
 task_is_legal=0
 
 
+
+# parse args
 while [ "$1" != "" ]; do
     PARAM=$1
     case $PARAM in
         -h | --help)
-            echo "Usage: $0 -t | --task [${TASKS[@]}]"
+            echo "Usage: $0 -t | --task [${tasks[@]}]"
             exit 0
             ;;
 
@@ -29,22 +45,42 @@ while [ "$1" != "" ]; do
     shift # Move to the next argument
 done
 
-for task_i in "${TASKS[@]}"; do
-    if [[ "$task" == "$task_i" ]]; then
-        task_is_legal=1
-        break # Stop looping immediately upon finding a match
+
+function main {
+    # check task
+    for task_i in "${tasks[@]}"; do
+        if [[ "$task" == "$task_i" ]]; then
+            task_is_legal=1
+            break
+        fi
+    done
+
+    if [[ $task_is_legal == 1 ]]; then
+        echo "INFO | See $log_path, 1 and wait for finish.."
+    else
+        echo "ERROR | Unsupported task: <$task>!"
+        echo "Usage: script_name -t | --task [${tasks[@]}]"
+        exit 1
     fi
-done
 
+    echo "INFO | ${task_desc[$task]}"
 
-
-if [[ $task_is_legal == 1 ]]; then
-    echo "INFO | See $log_path, 1 and wait for finish.."
-else
-    echo "ERROR | Unsupported task: <$task>!"
-    echo "Usage: script_name -t | --task [${TASKS[@]}]"
-    exit 1
-fi
+    if [[ "$task" == "create_vivado_project" ]]; then
+        $task
+    elif [[ "$task" == "load_fpga" ]]; then
+        $task
+    elif [[ "$task" == "program_flash" ]]; then
+        $task
+    elif [[ "$task" == "program_n_flash" ]]; then
+        $task
+    elif [[ "$task" == "debug" ]]; then
+        $task
+    else
+        vivado -nolog -nojournal -notrace -mode batch -source vivado_cli_task.tcl -tclargs $task &>> $log_path
+        println
+        check_log_errors
+    fi
+}
 
 
 function check_log_errors {
@@ -54,51 +90,11 @@ function check_log_errors {
     n_errors=`grep -Ec $ERROR_PATTERN $log_path`
 
     if (( n_errors > 0 )); then
-        echo "ERROR | ..Failed. Terminated due to ${n_errors} error(s). See log for details: ${log_path}, 1."
+        echo "ERROR | .. Failed. Terminated due to ${n_errors} error(s). See log for details: ${log_path}, 1."
         exit 1
     else
-        echo "INFO | ..Ok"
+        echo "INFO | .. Ok"
     fi
-}
-
-
-function extract_version {
-    version_src_path="${root_path%/}/rtl/common/fpga_firmware_commit_hash.vh"
-    dotnet_gitversion=$(dotnet-gitversion)
-    echo $dotnet_gitversion
-
-    pattern='.*\"Major\"\: ([0-9]+),.*'
-    if [[ "$dotnet_gitversion" =~ $pattern ]]; then
-        major=${BASH_REMATCH[1]}
-    else
-        major=255
-    fi
-
-    pattern='.*\"Minor\"\: ([0-9]+),.*'
-    if [[ "$dotnet_gitversion" =~ $pattern ]]; then
-        minor=${BASH_REMATCH[1]}
-    else
-        minor=255
-    fi
-
-    pattern='.*\"Patch\"\: ([0-9]+),.*'
-    if [[ "$dotnet_gitversion" =~ $pattern ]]; then
-        patch=${BASH_REMATCH[1]}
-    else
-        patch=255
-    fi
-
-    pattern='.*\"InformationalVersion\"\: \"(\S+)\",.*'
-    if [[ "$dotnet_gitversion" =~ $pattern ]]; then
-        informational_version=${BASH_REMATCH[1]}
-    else
-        informational_version=XXX
-    fi
-
-    echo $major
-    echo $minor
-    echo $patch
-    echo $informational_version
 }
 
 
@@ -108,94 +104,61 @@ function println {
 
 
 function debug {
-    # debug tcl
-    # vivado -nolog -nojournal -notrace -mode batch -source vivado_cli_task.tcl -tclargs ${FUNCNAME[0]} arg1 2 &>> $log_path
-    check_log_errors
+    echo "Define stuff!"
 }
 
 
 function create_vivado_project {
-    # all 'version' manipulations are performed in microcode part (software)
-    # extract_version
+
+    # create rtl include configs
+    spi_flash_type_include="${root_path%/}/rtl/common/spi_flash_type.vh"
+    if [[ $FLASH_SPI_INTERFACE == SPIx4 ]]; then
+        echo "\`define   FLASH_SPIX4" > $spi_flash_type_include
+    elif [[ $FLASH_SPI_INTERFACE == SPIx1 ]]; then
+        echo "\`define   FLASH_SPIX1" > $spi_flash_type_include
+    else
+        echo "" > $spi_flash_type_include
+    fi
+
+    spi_flash_property_xdc="${root_path%/}/syn/xdc/spi_flash_property.xdc"
+    if [[ $FLASH_SPI_INTERFACE == SPIx4 ]]; then
+        echo "set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design]" > $spi_flash_property_xdc
+    elif [[ $FLASH_SPI_INTERFACE == SPIx1 ]]; then
+        echo "set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 1 [current_design]" > $spi_flash_property_xdc
+    else
+        echo "ERROR | .. Failed. Terminated. Wrong <FLASH_SPI_INTERFACE> env var value: $FLASH_SPI_INTERFACE"
+        exit 1
+    fi
+
 
     # create vivado project
-    echo "INFO | Vivado. Create project: step 1.."
+    echo "INFO | Step 1 (create project) .."
     vivado -nolog -nojournal -notrace -mode batch -source vivado_cli_task.tcl -tclargs create_vivado_project &>> $log_path
     println
     check_log_errors
 
-    # generate block design and add it to project
-    echo "INFO | Vivado. Create project: step 2 (add block design).."
+    # create block design and add it to project
+    echo "INFO | Step 2 (add block design) .."
     vivado -nolog -nojournal -notrace -mode batch -source vivado_cli_task.tcl -tclargs add_block_design &>> $log_path
     println
     check_log_errors
-}
 
-
-function update_vivado_project {
-    echo "INFO | Vivado. Update project: generate 2 tcl scripts used to create project in future from scratch"
-    vivado -nolog -nojournal -notrace -mode batch -source vivado_cli_task.tcl -tclargs ${FUNCNAME[0]} &>> $log_path
+    # customize config_flash
+    echo "INFO | Customize config flash .."
+    vivado -nolog -nojournal -notrace -mode batch -source vivado_cli_task.tcl -tclargs customize_config_flash $FLASH_SPI_INTERFACE &>> $log_path
     println
     check_log_errors
-}
-
-
-function generate_platform {
-    echo "INFO | Vivado. Generate platform xsa file.."
-    vivado -nolog -nojournal -notrace -mode batch -source vivado_cli_task.tcl -tclargs ${FUNCNAME[0]} &>> $log_path
-    println
-    check_log_errors
-}
-
-
-function synth {
-    echo "INFO | Vivado. Run synthesis"
-    vivado -nolog -nojournal -notrace -mode batch -source vivado_cli_task.tcl -tclargs ${FUNCNAME[0]} &>> $log_path
-    println
-    check_log_errors
-}
-
-
-function impl {
-    echo "INFO | Vivado. Run implementation"
-    vivado -nolog -nojournal -notrace -mode batch -source vivado_cli_task.tcl -tclargs ${FUNCNAME[0]} &>> $log_path
-    println
-    check_log_errors
-}
-
-
-function generate_impl_artefacts {
-    echo "INFO | Vivado. Generate post-implementation artefacts (func and time netlists, sdf file)"
-    vivado -nolog -nojournal -notrace -mode batch -source vivado_cli_task.tcl -tclargs ${FUNCNAME[0]} &>> $log_path
-    println
-    check_log_errors
-}
-
-
-function generate_bitstream {
-    echo "INFO | Vivado. Generate bitstreams: *.bit & *.bin"
-    vivado -nolog -nojournal -notrace -mode batch -source vivado_cli_task.tcl -tclargs ${FUNCNAME[0]} &>> $log_path
-    println
-    check_log_errors
-}
-
-
-function copy_bin_file {
-    echo "INFO | Copy ${VIVADO_BIN_STREAM} to $ART_BIN_FOLDER"
-    cp -r ${VIVADO_BIN_STREAM} ${ART_BIN_FOLDER}
-
 }
 
 
 function load_fpga {
-    echo "INFO | Vivado. Load fpga. Bit file: $VIVADO_BIT_STREAM"
+    [ ! -f $VIVADO_BIT_STREAM ] && echo "ERROR | Can't find bit file: $VIVADO_BIT_STREAM. Terminated!" && exit 1
     $VIVADO_BIN_TOOL -nolog -nojournal -notrace -mode batch -source vivado_cli_task.tcl -tclargs ${FUNCNAME[0]} &>> $log_path
     check_log_errors
 }
 
 
 function program_flash {
-    echo "INFO | Vivado. Program config flash. Bin file: $PROGRAM_BIN_STREAM"
     [ ! -f $PROGRAM_BIN_STREAM ] && echo "ERROR | Can't find bin file: $PROGRAM_BIN_STREAM. Terminated!" && exit 1
     $VIVADO_BIN_TOOL -nolog -nojournal -notrace -mode batch -source vivado_cli_task.tcl -tclargs ${FUNCNAME[0]} &>> $log_path
     check_log_errors
@@ -203,7 +166,6 @@ function program_flash {
 
 
 function program_n_flash {
-    echo "INFO | Vivado. Program N config flashes. Bin file: $PROGRAM_BIN_STREAM"
     [ ! -f $PROGRAM_BIN_STREAM ] && echo "ERROR | Can't find bin file: $PROGRAM_BIN_STREAM. Terminated!" && exit 1
     # Detect active jtag connections
     echo "INFO | Detect active targets .."
@@ -235,15 +197,4 @@ function program_n_flash {
 }
 
 
-function git_clean {
-    echo "INFO | Cleanup"
-    (
-    cd ${root_path%/}
-    git clean -qfxd
-    )
-}
-
-
-# execute requested task
-$task
-# exit 0
+main

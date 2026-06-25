@@ -4,6 +4,9 @@ from pathlib import Path
 VITIS_WORKSPACE_PATH = os.environ.get("VITIS_WORKSPACE_PATH", ".")
 VITIS_SRC_PATH = os.environ.get("VITIS_SRC_PATH", ".")
 MC_FIRMWARE_GITVERSION_HEADER = os.environ.get("MC_FIRMWARE_GITVERSION_HEADER", ".")
+MC_FIRMWARE_FLASH_TYPE_HEADER = os.environ.get("MC_FIRMWARE_FLASH_TYPE_HEADER", ".")
+FLASH_SPI_INTERFACE = os.environ.get("FLASH_SPI_INTERFACE", ".")
+
 
 XSA_PLATFORM_FILE = os.environ.get("XSA_PLATFORM_FILE", ".")
 ART_ELF_FOLDER = os.environ.get("ART_ELF_FOLDER", ".")
@@ -25,6 +28,12 @@ assert VITIS_SRC_PATH != ".", (
 )
 assert MC_FIRMWARE_GITVERSION_HEADER != ".", (
     "<MC_FIRMWARE_GITVERSION_HEADER> env variable is not defined. Terminated!"
+)
+assert MC_FIRMWARE_FLASH_TYPE_HEADER != ".", (
+    "<MC_FIRMWARE_FLASH_TYPE_HEADER> env variable is not defined. Terminated!"
+)
+assert FLASH_SPI_INTERFACE != ".", (
+    "<FLASH_SPI_INTERFACE> env variable is not defined. Terminated!"
 )
 assert XSA_PLATFORM_FILE != ".", (
     "<XSA_PLATFORM_FILE> env variable is not defined. Terminated!"

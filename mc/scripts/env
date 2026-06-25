@@ -29,6 +29,7 @@ MC_PLATFORM_NAME=oct640_cu_top
 MC_APP_NAME=oct640_cu_top_mc
 MC_APP_BUILD_CONFIG=RELEASE
 MC_FIRMWARE_GITVERSION_HEADER=${VITIS_SRC_PATH}/include/firmware_version.h
+MC_FIRMWARE_FLASH_TYPE_HEADER=${VITIS_SRC_PATH}/include/spi_flash_type.h
 XSA_PLATFORM_OS=standalone
 XSA_PLATFORM_CPU=core_sys_core_mblaze_core
 XSA_PLATFORM_OS_STDINOUT_DEBUG=core_sys_core_mdm

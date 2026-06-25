@@ -46,7 +46,7 @@ if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
 
 # The design that will be created by this Tcl script contains the following 
 # module references:
-# usb_uart, ddr3_proxy_rw_bram_if, mipi_csi_axis_streamer, sens_streamer, ddr3_sm_core_frontend, ddr3_sm_core_request_handler, ips_demux, pb_master_clk_mux, dbg_probe_mux_wrapper, ddr3_proxy_rw_request_if
+# usb_uart, ddr3_proxy_rw_bram_if, mipi_csi_axis_streamer, sens_streamer, ddr3_sm_core_frontend, ddr3_sm_core_request_handler, ips_demux, pb_master_clk_mux, dbg_probe_mux_wrapper, mipi_csi_axis_streamer, ddr3_proxy_rw_request_if
 
 # Please add the sources of those modules before sourcing this Tcl script.
 
@@ -190,6 +190,7 @@ ddr3_sm_core_request_handler\
 ips_demux\
 pb_master_clk_mux\
 dbg_probe_mux_wrapper\
+mipi_csi_axis_streamer\
 ddr3_proxy_rw_request_if\
 "
 
@@ -691,6 +692,8 @@ proc create_hier_cell_image_processing_pipeline { parentCell nameHier } {
 
   create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:bram_rtl:1.0 ddr3_proxy_bram_mntr
 
+  create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:axis_rtl:1.0 uvc_axis
+
 
   # Create pins
   create_bd_pin -dir I -type clk sys_135_clk
@@ -824,7 +827,23 @@ proc create_hier_cell_image_processing_pipeline { parentCell nameHier } {
      return 1
    }
   
+  # Create instance: uvc_axis_streamer, and set properties
+  set block_name mipi_csi_axis_streamer
+  set block_cell_name uvc_axis_streamer
+  if { [catch {set uvc_axis_streamer [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $uvc_axis_streamer eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
+  set_property -dict [ list \
+   CONFIG.ASSOCIATED_BUSIF {user_sens_img:mipi_csi_axis} \
+ ] [get_bd_pins /image_processing_pipeline/uvc_axis_streamer/i_sys_clk]
+
   # Create interface connections
+  connect_bd_intf_net -intf_net Conn1 [get_bd_intf_pins uvc_axis_streamer/mipi_csi_axis] [get_bd_intf_pins uvc_axis]
   connect_bd_intf_net -intf_net Conn2 [get_bd_intf_pins ddr3_sm_core_request_handler/ddr3_proxy_bram_mntr] [get_bd_intf_pins ddr3_proxy_bram_mntr]
   connect_bd_intf_net -intf_net core_sys_rw_port_req_1 [get_bd_intf_pins core_sys_rw_port_req] [get_bd_intf_pins ddr3_sm_core_request_handler/rw_port_0_req]
   connect_bd_intf_net -intf_net ddr3_frontend_ddr3_0 [get_bd_intf_pins ddr3] [get_bd_intf_pins ddr3_sm_core_frontend/ddr3]
@@ -840,6 +859,7 @@ proc create_hier_cell_image_processing_pipeline { parentCell nameHier } {
   connect_bd_intf_net -intf_net sens_streamer_mipi_csi [get_bd_intf_pins sens_streamer/mipi_csi] [get_bd_intf_pins mipi_csi_axis_streamer/user_sensor_image]
   connect_bd_intf_net -intf_net sens_streamer_rd_coeff_req [get_bd_intf_pins sens_streamer/rd_coeff_req] [get_bd_intf_pins ddr3_sm_core_request_handler/rd_port_0_req]
   connect_bd_intf_net -intf_net sens_streamer_rd_dp_mask_req [get_bd_intf_pins sens_streamer/rd_dp_mask_req] [get_bd_intf_pins ddr3_sm_core_request_handler/rd_port_1_req]
+  connect_bd_intf_net -intf_net sens_streamer_uvc [get_bd_intf_pins sens_streamer/uvc] [get_bd_intf_pins uvc_axis_streamer/user_sensor_image]
 
   # Create port connections
   connect_bd_net -net In2_0_1  [get_bd_pins i_superviser] \
@@ -851,7 +871,8 @@ proc create_hier_cell_image_processing_pipeline { parentCell nameHier } {
   [get_bd_pins ddr3_sm_core_frontend/i_core_clk] \
   [get_bd_pins ddr3_sm_core_request_handler/i_sys_clk] \
   [get_bd_pins mipi_csi_axis_streamer/i_sys_clk] \
-  [get_bd_pins sens_streamer/i_sys_clk]
+  [get_bd_pins sens_streamer/i_sys_clk] \
+  [get_bd_pins uvc_axis_streamer/i_sys_clk]
   connect_bd_net -net clk_store_sys_clk_out3  [get_bd_pins sys_135_clk] \
   [get_bd_pins ddr3_sm_core_frontend/i_core_135_clk]
   connect_bd_net -net clk_store_sys_clk_out4  [get_bd_pins ddr_clk] \
@@ -862,7 +883,8 @@ proc create_hier_cell_image_processing_pipeline { parentCell nameHier } {
   [get_bd_pins ddr3_sm_core_frontend/i_rst_n] \
   [get_bd_pins ddr3_sm_core_request_handler/i_rst_n] \
   [get_bd_pins mipi_csi_axis_streamer/i_rst_n] \
-  [get_bd_pins sens_streamer/i_sys_rst_n]
+  [get_bd_pins sens_streamer/i_sys_rst_n] \
+  [get_bd_pins uvc_axis_streamer/i_rst_n]
   connect_bd_net -net dbg_probe_mux_wrapper_dbg_probe_mc_in_0  [get_bd_pins dbg_probe_mux_wrapper/dbg_probe_mc_in_0] \
   [get_bd_pins dbg_probe_mc_in_0]
   connect_bd_net -net dbg_probe_mux_wrapper_dbg_probe_mc_in_2  [get_bd_pins dbg_probe_mux_wrapper/dbg_probe_mc_in_2] \
@@ -886,7 +908,8 @@ proc create_hier_cell_image_processing_pipeline { parentCell nameHier } {
   connect_bd_net -net ips_demux_o_ips_mipi_csi_driver_rst  [get_bd_pins ips_demux/o_ips_mipi_csi_phy_rst] \
   [get_bd_pins ips_mipi_csi_phy_rst]
   connect_bd_net -net ips_demux_o_ips_mipi_csi_stream_dis  [get_bd_pins ips_demux/o_ips_mipi_csi_stream_dis] \
-  [get_bd_pins mipi_csi_axis_streamer/i_disable]
+  [get_bd_pins mipi_csi_axis_streamer/i_disable] \
+  [get_bd_pins uvc_axis_streamer/i_disable]
   connect_bd_net -net ips_demux_o_ips_ppm  [get_bd_pins ips_demux/o_ips_ppm] \
   [get_bd_pins sens_streamer/i_ips_ppm]
   connect_bd_net -net ips_demux_o_ips_soft_trigger  [get_bd_pins ips_demux/o_ips_soft_trigger] \

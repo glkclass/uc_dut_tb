@@ -23,7 +23,7 @@ from env_vars import (
     XSA_PLATFORM_OS_STDINOUT_DEBUG,
     XSA_PLATFORM_OS_STDINOUT_RELEASE,
 )
-from utils import generate_gitversion_header
+from utils import generate_gitversion_header, generate_flash_type_header
 
 logging.basicConfig(
     level=logging.DEBUG,
@@ -48,6 +48,7 @@ def create_project(args):
     assert os.path.isdir(VITIS_SRC_PATH), f"Wrong path to src folder: {VITIS_SRC_PATH}!"
 
     generate_gitversion_header()
+    generate_flash_type_header()
 
     log.info(f"Prepare env..")
 
