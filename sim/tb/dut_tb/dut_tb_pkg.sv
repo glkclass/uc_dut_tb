@@ -15,12 +15,18 @@ package dut_tb_pkg;
     import dutb_util_pkg::*;
     import dutb_pkg::*;
 
+    `include "dut_tb_macros.svh"
     import oct640_cu_util_pkg::*;
 
     `include "mc_const.vh"
 
     // UVM infra
+    `include "uvm_infra/base_func_proxy.svh"
     `include "uvm_infra/dut_if_proxy.svh"
+
+    // txn
+    `include "uvm_infra/init_ips_txn.svh"
+    `include "uvm_infra/init_ddr3_txn.svh"
     `include "uvm_infra/sns_rd_coeff_txn.svh"
     `include "uvm_infra/sns_rd_ddr3_txn.svh"
     `include "uvm_infra/core_sys_txn.svh"

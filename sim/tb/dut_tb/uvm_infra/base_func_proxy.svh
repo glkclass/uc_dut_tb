@@ -1,26 +1,18 @@
 /******************************************************************************************************************************
     Project         :   AM
-    Date            :   June 2025
-    Package         :   dut_tb_util_pkg;
-    Description     :   Contains consts, typedefs, utils, ...
+    Date            :   June 2026
+    Class           :   base_func_proxy
+    Description     :   Proxy to access functions located inside static top module env from uvm infra.
+                        Contains only method signatures. Implementation will be added in a derived class.
 ******************************************************************************************************************************/
 
 
 // ****************************************************************************************************************************
-package dut_tb_util_pkg;
-
-    parameter time
-
-        T_CLK_100MHZ_PERIOD     = 10ns,
-        T_CLK_50MHZ_PERIOD      = 20ns,
-        T_CLK_72_25MHZ_PERIOD   = 13468ps,
-        T_CLK_27MHZ_PERIOD      = 37ns,
-        T_RST_N_LEN             = 3us,
-        T_TEST_LEN              = 20us;
-
-
-    typedef     logic[15:0]                                 t_pixel;
-
-endpackage
+virtual class base_func_proxy;
+    pure virtual task ddr3_memory_write(input int bank, row, col, data);
+endclass
 // ****************************************************************************************************************************
 
+
+
+// ****************************************************************************************************************************

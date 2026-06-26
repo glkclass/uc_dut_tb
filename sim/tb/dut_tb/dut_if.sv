@@ -22,12 +22,19 @@ import oct640_cu_util_pkg::DDR3_DQ_W;
 
 // ****************************************************************************************************************************
 interface dut_if (
-    input rst_n, ddr_initilaized, sys_clk );
+    input               rst_n, ddr_initilaized, sys_clk );
+    sys_if              sys_vif();
     pb_if               pb_vif();
     axis_if             csi_vif();
     sm_core_rw_if       core_sys_rw_vif();
     sns_rd_ddr3_if      sns_rd_ddr3_vif();
     sns_rd_coeff_if     sns_rd_coeff_vif();
+endinterface
+
+
+interface sys_if ();
+    logic   [32 - 1             :   0]      ips, ipst;
+    logic   [18 - 1             :   0]      coeff_table_ddr3_base_addr;
 endinterface
 
 
@@ -44,8 +51,6 @@ interface sns_rd_coeff_if ();
 
     logic   unsigned  [COEFF_A_W - 1      :   0]    coeff_a;
     logic   signed    [COEFF_B_W - 1      :   0]    coeff_b;
-
-
 endinterface
 
 interface sns_rd_ddr3_if ();

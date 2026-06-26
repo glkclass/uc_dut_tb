@@ -9,13 +9,13 @@ export
 
 LOG ?= $(TB_LOG)
 
-build: dutb glbl ip_cores rtl dut_tb elab_tb
-
-run: run_tb view_tb
+build_tb: dutb glbl ip_cores rtl dut_tb
+elab_tb: build_tb elab
+run_tb: elab_tb run
 
 
 # rules
-debug: build run
+debug: view
 	$(ECHO_HEADER)
 
 
@@ -78,7 +78,7 @@ dut_tb:
 	$(ECHO_FOOTER)
 
 
-elab_tb:
+elab:
 	$(ECHO_HEADER)
 	$(SETUP_TOOLS)
 	@mkdir -p $(BUILD_FOLDER)
@@ -88,7 +88,7 @@ elab_tb:
 	$(ECHO_FOOTER)
 
 
-run_tb: run.tcl
+run: run.tcl
 	$(ECHO_HEADER)
 	$(SETUP_TOOLS)
 	@mkdir -p $(BUILD_FOLDER)
@@ -98,12 +98,8 @@ run_tb: run.tcl
 	$(ECHO_FOOTER)
 
 
-view_tb:
+view:
 	gtkwave $(BUILD_FOLDER)/wf.vcd dut_tb.gtkw &
-
-
-view_tb_impl:
-	gtkwave wf.vcd dut_tb.gtkw &
 
 
 run.tcl:

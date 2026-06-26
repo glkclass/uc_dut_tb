@@ -70,7 +70,7 @@ dtb_build:
 
 dtb_run:
 	@cd ${DUT_TB_ROOT_PATH}/scrpt
-	@make run
+	@make run_tb
 
 dtb_clean:
 	@cd ${DUT_TB_ROOT_PATH}/scrpt
