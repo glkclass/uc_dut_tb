@@ -1,7 +1,5 @@
 --testplusarg TOOLS=VIVADO
 --testplusarg STORE_WAVE
---testplusarg UVM_VERBOSITY=UVM_HIGH
---testplusarg UVM_TESTNAME=dut_test
 --testplusarg model_data+.
 --runall
 --t run.tcl

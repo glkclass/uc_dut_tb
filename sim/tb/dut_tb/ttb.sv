@@ -8,14 +8,7 @@
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 
-//Provide access to top static funcs for UVM infra
-import dut_tb_pkg::base_func_proxy;
-class top_func_proxy extends base_func_proxy;
-    task ddr3_memory_write(input int bank, row, col, data);
-        `uvm_debug("DDR3 memory write", "TTB")
-        ttb.u_ram.memory_write(bank, row, col, data);
-    endtask
-endclass
+`include "top_func_proxy.svh"
 
 
 // ****************************************************************************************************************************
@@ -37,7 +30,7 @@ module ttb;
 
 
 // wires
-    wire                        rst_n, ddr_initilaized, board_clk;
+    wire                                        rst_n, ddr_initilaized, board_clk;
 
     wire                                        ddr3_reset_n;
     wire                                        ddr3_ck_p;
@@ -76,7 +69,7 @@ module ttb;
         uvm_config_db #(base_func_proxy)::set(null, "*", "top_func_proxy", top_func_proxy);
 
         $timeformat(-9, 3, " ns", 13);
-        `STORE_WAVE(ttb, "wf.vcd")
+        `store_wave(ttb, "wf.vcd")
 
         // Provide DUT interfaces to UVM infra
         uvm_config_db #(virtual dut_if)::set(null, "uvm_test_top", "dut_vif", dut_if_h);

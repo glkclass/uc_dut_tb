@@ -11,7 +11,7 @@ LOG ?= $(TB_LOG)
 
 build_tb: dutb glbl ip_cores rtl dut_tb
 elab_tb: build_tb elab
-run_tb: elab_tb run
+run_tb: run
 
 
 # rules
@@ -83,6 +83,7 @@ elab:
 	$(SETUP_TOOLS)
 	@mkdir -p $(BUILD_FOLDER)
 	@cd $(BUILD_FOLDER)
+
 	envsubst < ../elab_tb.opt > tmp.opt
 	@$(ELAB_BIN_TOOL) -f tmp.opt
 	$(ECHO_FOOTER)
@@ -93,7 +94,8 @@ run: run.tcl
 	$(SETUP_TOOLS)
 	@mkdir -p $(BUILD_FOLDER)
 	@cd $(BUILD_FOLDER)
-	envsubst < ../run_tb.opt > tmp.opt
+	envsubst < ../$(DUTB_TEST_CONFIG) > tmp.opt
+	envsubst < ../run_tb.opt >> tmp.opt
 	@$(SIM_BIN_TOOL) -f tmp.opt
 	$(ECHO_FOOTER)
 

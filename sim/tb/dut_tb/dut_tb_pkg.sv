@@ -34,7 +34,9 @@ package dut_tb_pkg;
     `include "uvm_infra/proxy_board_trigger_txn.svh"
     `include "uvm_infra/mipi_csi_axis_txn.svh"
     // `include "uvm_infra/proxy_board_test_seq.svh"
+    `include "uvm_infra/dut_agent_idx.svh"
     `include "uvm_infra/dut_test.svh"
+    `include "uvm_infra/dut_test_0.svh"
 endpackage
 
 

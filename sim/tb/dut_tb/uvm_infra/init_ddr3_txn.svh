@@ -13,8 +13,8 @@ class `TXN_NAME extends dutb_txn_base;
     `uvm_object_utils(`TXN_NAME)
 
     dut_if_proxy dut_if_h;
-    extern function                         new (string name = `STR(`TXN_NAME));
-    extern virtual  task                    drive                   (input dutb_if_proxy_base dutb_if);
+    extern function                         new             (string name = `STR(`TXN_NAME));
+    extern virtual  task                    drive           (input dutb_if_proxy_base dutb_if);
     // extern virtual  task                    monitor                 (input dutb_if_proxy_base dutb_if);
 endclass
 // ****************************************************************************************************************************
