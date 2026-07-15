@@ -53,18 +53,18 @@ endfunction
 
 
 task sns_rd_ddr3_txn::check_rd_ddr3_txn();
-    @(posedge vif.rd_coeff_req_rdreq);
+    @(posedge vif.rd_coeff_rw_req);
     `uvm_debug_txn($sformatf("verbosity_level: %d", verbosity_level))
-    `uvm_debug_txn($sformatf("rdreq for addr: %d", vif.rd_coeff_req_row_base_addr))
+    `uvm_debug_txn($sformatf("rdreq for addr: %d", vif.rd_coeff_row_base_addr))
     fork
         forever
             begin
-                @(posedge vif.rd_coeff_bram_clk iff vif.rd_coeff_bram_we);
-                `uvm_debug_txn($sformatf("rd addr & data: %d 0x%016X", vif.rd_coeff_req_row_base_addr, vif.rd_coeff_bram_din))
+                @(posedge vif.rd_coeff_clk iff vif.rd_coeff_bram_we);
+                `uvm_debug_txn($sformatf("rd addr & data: %d 0x%016X", vif.rd_coeff_row_base_addr, vif.rd_coeff_bram_din))
             end
 
-        @(negedge vif.rd_coeff_req_rdbusy)
-        `uvm_debug_txn($sformatf("rdbusy for addr: %d", vif.rd_coeff_req_row_base_addr))
+        @(negedge vif.rd_coeff_rw_bsy)
+        `uvm_debug_txn($sformatf("rdbusy for addr: %d", vif.rd_coeff_row_base_addr))
     join_any disable fork;
 
 endtask

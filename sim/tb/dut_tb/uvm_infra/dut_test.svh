@@ -3,7 +3,7 @@
     Date            :   June 2025
     Class           :   dut_test
     Description     :   Creates dutb flat infrastructure: set of agents and scorebords on the same level of hierarchy and connections between them.
-                        Specific test behaviour should be defined in childs.
+                        Specific test behaviour should be defined in child classes.
 ******************************************************************************************************************************/
 
 

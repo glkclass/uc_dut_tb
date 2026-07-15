@@ -11,11 +11,10 @@ LOG ?= $(TB_LOG)
 
 build_tb: dutb glbl ip_cores rtl dut_tb
 elab_tb: build_tb elab
-run_tb: run
 
 
 # rules
-debug: view
+debug:
 	$(ECHO_HEADER)
 
 

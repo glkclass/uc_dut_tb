@@ -41,7 +41,7 @@ task dut_test_0::run_phase(uvm_phase phase);
 
     dutb_txn_seq #(init_ips_txn) init_ips_seq_h = new("init_ips_seq_h");
     dutb_txn_seq #(init_ddr3_txn) init_ddr3_seq_h = new("init_ddr3_seq_h");
-    dutb_txn_seq #(proxy_board_trigger_txn) pb_trigger_seq_h = new("pb_trigger_seq_h");
+    // dutb_txn_seq #(proxy_board_trigger_txn) pb_trigger_seq_h = new("pb_trigger_seq_h");
     dutb_txn_seq #(proxy_board_image_txn) pb_image_seq_h = new("pb_image_seq_h");
     dutb_txn_seq #(core_sys_txn) cs_seq_h = new("cs_seq_h");
 
@@ -51,7 +51,7 @@ task dut_test_0::run_phase(uvm_phase phase);
         init_ddr3_seq_h.start(env_h.agent_h[INIT_DDR3].driver_h.sqncr_h);
         pb_image_seq_h.start(env_h.agent_h[PROXY_BOARD_IMAGE].driver_h.sqncr_h);
         cs_seq_h.start(env_h.agent_h[CORE_SYS].driver_h.sqncr_h);
-        pb_trigger_seq_h.start(env_h.agent_h[PROXY_BOARD_TRIGGER].driver_h.sqncr_h);
+        // pb_trigger_seq_h.start(env_h.agent_h[PROXY_BOARD_TRIGGER].driver_h.sqncr_h);
         // dutb_handler_h.wait_for_stop_test();
     join
     phase.drop_objection(this, "dut_test finished");

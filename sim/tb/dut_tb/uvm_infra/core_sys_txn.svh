@@ -66,19 +66,20 @@ task core_sys_txn::generate_wr_request();
     if (n_row < 16)
         begin
             @(posedge dut_vif.sys_clk);
-            cs_vif.req_row_base_addr = `DDR3_MEMORY_CYCLIC_COEFF_TABLE_BASE_ADDR / `DDR3_LINE_SIZE + 2 * n_row;
+            cs_vif.row_base_addr = `DDR3_MEMORY_CYCLIC_COEFF_TABLE_BASE_ADDR / `DDR3_LINE_SIZE + 2 * n_row;
             n_row++;
-            `uvm_debug_txn($sformatf("core sys wrreq for addr: %d", cs_vif.req_row_base_addr))
+            `uvm_debug_txn($sformatf("core sys rw_req for addr: %d", cs_vif.row_base_addr))
 
-            cs_vif.req_bl8_offs = 0;
-            cs_vif.req_burst_num = 0;
-            cs_vif.req_burst_size = 31;
-            cs_vif.req_wrreq = 1'b0;
+            cs_vif.bl8_offs = 0;
+            cs_vif.burst_num = 0;
+            cs_vif.burst_size = 31;
+            cs_vif.rw_req = 1'b0;
+            cs_vif.rw_mod = 1'b1;
             @(posedge dut_vif.sys_clk);
-            cs_vif.req_wrreq = 1'b1;
+            cs_vif.rw_req = 1'b1;
             repeat(16)
                 @(posedge dut_vif.sys_clk);
-            cs_vif.req_wrreq = 1'b0;
+            cs_vif.rw_req = 1'b0;
         end
     forever @(posedge dut_vif.sys_clk);
 endtask
@@ -88,7 +89,7 @@ task core_sys_txn::provide_bram_response();
     int i;
     shortint coeffs[128 * 3 + 128];
 
-    @(posedge dut_vif.sys_clk iff cs_vif.req_wrreq);
+    @(posedge dut_vif.sys_clk iff cs_vif.rw_req);
 
     for (i = 0; i < 128; i++)
         begin
@@ -96,8 +97,8 @@ task core_sys_txn::provide_bram_response();
             logic [22 - 1 : 0] coeff_b;
             logic [48 - 1 : 0] coeff_a_b;
 
-            coeff_a = 128 * cs_vif.req_row_base_addr + 2 * i;
-            coeff_b = 128 * cs_vif.req_row_base_addr + 2 * i + 1;
+            coeff_a = 128 * cs_vif.row_base_addr + 2 * i;
+            coeff_b = 128 * cs_vif.row_base_addr + 2 * i + 1;
             coeff_a_b = {coeff_b, coeff_a};
 
             coeffs[3 * i] = coeff_a_b[15 : 0];
@@ -127,15 +128,14 @@ task core_sys_txn::drive(input dutb_if_proxy_base dutb_if);
 
     wait (dut_vif.ddr_initilaized) #0;
 
-    cs_vif.req_wrreq = 1'b0;
-    cs_vif.req_rdreq = 1'b0;
+    cs_vif.rw_req = 1'b0;
 
     fork
         generate_wr_request();
         provide_bram_response();
         begin
-            @(negedge dut_vif.sys_clk iff cs_vif.req_wrbusy);
-            // `uvm_debug($sformatf("core sys wrrsp for addr: %d", cs_vif.req_start_row_addr))
+            @(negedge dut_vif.sys_clk iff cs_vif.rw_bsy);
+            // `uvm_debug($sformatf("core sys wrrsp for addr: %d", cs_vif.start_row_addr))
             #10us;
         end
     join_any disable fork;
@@ -150,7 +150,7 @@ task core_sys_txn::monitor(input dutb_if_proxy_base dutb_if);
     cs_vif = dut_if_h.dut_vif.core_sys_rw_vif;
 
     wait (dut_vif.rst_n) #0;
-    @(posedge cs_vif.req_wrreq);
+    @(posedge cs_vif.rw_req);
 endtask
 
 

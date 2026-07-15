@@ -56,14 +56,16 @@ endinterface
 
 interface sns_rd_ddr3_if ();
     // ddr3 sm core rd port for coeff reading
-    logic                                               rd_coeff_req_rdreq;
-    logic                                               rd_coeff_req_rdbusy;
-    logic      [DDR3_ROW_ADDR_W - 1        : 0]         rd_coeff_req_row_base_addr;
-    logic      [DDR3_COL_W - 4             : 0]         rd_coeff_req_bl8_offs;
-    logic      [BST_SIZE_W - 1             : 0]         rd_coeff_req_burst_size;
-    logic      [BST_NUM_W - 1              : 0]         rd_coeff_req_burst_num;
+    logic                                               rd_coeff_clk;
+    logic                                               rd_coeff_rw_req;
+    logic                                               rd_coeff_rw_mod;
+    logic                                               rd_coeff_rw_bsy;
+    logic      [DDR3_ROW_ADDR_W - 1        : 0]         rd_coeff_row_base_addr;
+    logic      [DDR3_COL_W - 4             : 0]         rd_coeff_bl8_offs;
+    logic      [BST_SIZE_W - 1             : 0]         rd_coeff_burst_size;
+    logic      [BST_NUM_W - 1              : 0]         rd_coeff_burst_num;
 
-    logic                                               rd_coeff_bram_clk;
+
     logic                                               rd_coeff_bram_we;
     logic      [1 + DDR3_COL_W - 3          : 0]        rd_coeff_bram_addr;
     logic      [4 * DDR3_DQ_W - 1           : 0]        rd_coeff_bram_din;
@@ -71,20 +73,19 @@ endinterface
 
 
 interface sm_core_rw_if ();
+  logic         clk;
   logic [8:0]   bram_addr;
-  logic         bram_clk;
   logic [63:0]  bram_din;
   logic [63:0]  bram_dout;
   logic         bram_en;
   logic         bram_we;
-  logic [6:0]   req_bl8_offs;
-  logic [2:0]   req_burst_num;
-  logic [6:0]   req_burst_size;
-  logic         req_rdreq;
-  logic         req_rdbusy;
-  logic [17:0]  req_row_base_addr;
-  logic         req_wrreq;
-  logic         req_wrbusy;
+  logic [6:0]   bl8_offs;
+  logic [2:0]   burst_num;
+  logic [6:0]   burst_size;
+  logic         rw_req;
+  logic         rw_mod;
+  logic         rw_bsy;
+  logic [17:0]  row_base_addr;
 endinterface
 
 

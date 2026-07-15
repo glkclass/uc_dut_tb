@@ -31,7 +31,7 @@ task `TXN_NAME::drive(input dutb_if_proxy_base dutb_if);
     `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
 
     `uvm_debug("Init DDR3 ram")
-    dut_if_h.top_func_proxy.ddr3_memory_write(0,0,0,0);
+    // dut_if_h.top_func_proxy.ddr3_memory_write(0,0,0,0);
 
     // // init coeffs
     // `INIT_DDR3(Init_0, $random, (`DDR3_MEMORY_CYCLIC_COEFF_TABLE_BASE_ADDR / `DDR3_LINE_SIZE), 24);

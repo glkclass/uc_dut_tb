@@ -127,6 +127,8 @@ task proxy_board_image_txn::drive(input dutb_if_proxy_base dutb_if);
         generate_pixel_clock();
         begin
             wait (dut_vif.rst_n);
+            wait (dut_vif.ddr_initilaized);
+
             if (1'b1 == pb_vif.trigger_out)
                 begin
                     @(negedge pb_vif.trigger_out);

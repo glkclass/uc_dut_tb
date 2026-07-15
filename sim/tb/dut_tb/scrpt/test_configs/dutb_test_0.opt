@@ -1,3 +1,4 @@
 --testplusarg UVM_TESTNAME=dut_test_0
+--testplusarg TEST_LENGTH_NS=1000000
 --testplusarg UVM_VERBOSITY=UVM_HIGH
---testplusarg OCT_FPS=60
+--testplusarg OCT_FPS=30

@@ -17,7 +17,6 @@ module ttb;
 
     import dutb_util_pkg::timeout_sim;
 
-    import dut_tb_util_pkg::T_TEST_LEN;
     import dut_tb_util_pkg::T_CLK_100MHZ_PERIOD;
     import dut_tb_util_pkg::T_RST_N_LEN;
 
@@ -64,6 +63,7 @@ module ttb;
 
     // Setup env and start
     initial begin
+        int test_length_ns;
         // Provide access to ttb static funcs for UVM infra
         static top_func_proxy top_func_proxy = new();
         uvm_config_db #(base_func_proxy)::set(null, "*", "top_func_proxy", top_func_proxy);
@@ -71,13 +71,16 @@ module ttb;
         $timeformat(-9, 3, " ns", 13);
         `store_wave(ttb, "wf.vcd")
 
+        test_length_ns = `get_arg_value("TEST_LENGTH_NS=%d", test_length_ns, 1ms);
+        `uvm_info("TTB", $sformatf("Max test length: %0d ns", test_length_ns), UVM_HIGH)
+
         // Provide DUT interfaces to UVM infra
         uvm_config_db #(virtual dut_if)::set(null, "uvm_test_top", "dut_vif", dut_if_h);
 
         // Start test
         fork
             run_test();
-            timeout_sim(T_TEST_LEN, 10);
+            timeout_sim(test_length_ns * 1ns, 10);
        join_any
     end
 
@@ -122,31 +125,30 @@ module ttb;
     assign dut_if_h.csi_vif.axis_tvalid                         =   u_ipp.mipi_csi_axis_tvalid;
 
     // core sys rw if
-    assign u_ipp.core_sys_rw_port_req_rdreq                     =   dut_if_h.core_sys_rw_vif.req_rdreq;
-    assign u_ipp.core_sys_rw_port_req_wrreq                     =   dut_if_h.core_sys_rw_vif.req_wrreq;
-    assign u_ipp.core_sys_rw_port_req_row_base_addr             =   dut_if_h.core_sys_rw_vif.req_row_base_addr;
-    assign u_ipp.core_sys_rw_port_req_bl8_offs                  =   dut_if_h.core_sys_rw_vif.req_bl8_offs;
-    assign u_ipp.core_sys_rw_port_req_burst_num                 =   dut_if_h.core_sys_rw_vif.req_burst_num;
-    assign u_ipp.core_sys_rw_port_req_burst_size                =   dut_if_h.core_sys_rw_vif.req_burst_size;
-    assign dut_if_h.core_sys_rw_vif.req_rdbusy                  =   u_ipp.core_sys_rw_port_req_rdbusy;
-    assign dut_if_h.core_sys_rw_vif.req_wrbusy                  =   u_ipp.core_sys_rw_port_req_wrbusy;
+    assign dut_if_h.core_sys_rw_vif.clk                         =   u_ipp.core_sys_rw_port_clk;
+    assign u_ipp.core_sys_rw_port_rw_req                        =   dut_if_h.core_sys_rw_vif.rw_req;
+    assign u_ipp.core_sys_rw_port_rw_mod                        =   dut_if_h.core_sys_rw_vif.rw_mod;
+    assign u_ipp.core_sys_rw_port_row_base_addr                 =   dut_if_h.core_sys_rw_vif.row_base_addr;
+    assign u_ipp.core_sys_rw_port_bl8_offs                      =   dut_if_h.core_sys_rw_vif.bl8_offs;
+    assign u_ipp.core_sys_rw_port_burst_num                     =   dut_if_h.core_sys_rw_vif.burst_num;
+    assign u_ipp.core_sys_rw_port_burst_size                    =   dut_if_h.core_sys_rw_vif.burst_size;
+    assign dut_if_h.core_sys_rw_vif.rw_bsy                      =   u_ipp.core_sys_rw_port_rw_bsy;
 
     assign u_ipp.core_sys_rw_port_bram_dout                     =   dut_if_h.core_sys_rw_vif.bram_dout;
     assign dut_if_h.core_sys_rw_vif.bram_addr                   =   u_ipp.core_sys_rw_port_bram_addr;
-    assign dut_if_h.core_sys_rw_vif.bram_clk                    =   u_ipp.core_sys_rw_port_bram_clk;
     assign dut_if_h.core_sys_rw_vif.bram_din                    =   u_ipp.core_sys_rw_port_bram_din;
     assign dut_if_h.core_sys_rw_vif.bram_en                     =   u_ipp.core_sys_rw_port_bram_en;
     assign dut_if_h.core_sys_rw_vif.bram_we                     =   u_ipp.core_sys_rw_port_bram_we;
 
 
     // sns rd ddr3
-    assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_req_rdreq          =   u_ipp.sens_streamer.inst.rd_coeff_req_rdreq;
-    assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_req_rdbusy         =   u_ipp.sens_streamer.inst.rd_coeff_req_rdbusy;
-    assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_req_row_base_addr  =   u_ipp.sens_streamer.inst.rd_coeff_req_row_base_addr;
-    assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_req_bl8_offs       =   u_ipp.sens_streamer.inst.rd_coeff_req_bl8_offs;
-    assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_req_burst_size     =   u_ipp.sens_streamer.inst.rd_coeff_req_burst_size;
-    assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_req_burst_num      =   u_ipp.sens_streamer.inst.rd_coeff_req_burst_num;
-    assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_bram_clk           =   u_ipp.sens_streamer.inst.rd_coeff_bram_clk;
+    assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_clk                =   u_ipp.sens_streamer.inst.rd_coeff_clk;
+    assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_rw_req             =   u_ipp.sens_streamer.inst.rd_coeff_rw_req;
+    assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_rw_bsy             =   u_ipp.sens_streamer.inst.rd_coeff_rw_bsy;
+    assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_row_base_addr      =   u_ipp.sens_streamer.inst.rd_coeff_row_base_addr;
+    assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_bl8_offs           =   u_ipp.sens_streamer.inst.rd_coeff_bl8_offs;
+    assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_burst_size         =   u_ipp.sens_streamer.inst.rd_coeff_burst_size;
+    assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_burst_num          =   u_ipp.sens_streamer.inst.rd_coeff_burst_num;
     assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_bram_we            =   u_ipp.sens_streamer.inst.rd_coeff_bram_we;
     assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_bram_addr          =   u_ipp.sens_streamer.inst.rd_coeff_bram_addr;
     assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_bram_din           =   u_ipp.sens_streamer.inst.rd_coeff_bram_din;
@@ -182,20 +184,19 @@ oct640_cu_clk_store_sys_0 clk_store_sys
 image_processing_pipeline_imp_PQRLL2 u_ipp (
     .bba(),
     .coeff_table_ddr3_base_addr(dut_if_h.sys_vif.coeff_table_ddr3_base_addr),
+    .core_sys_rw_port_clk(),
     .core_sys_rw_port_bram_addr(),
-    .core_sys_rw_port_bram_clk(),
     .core_sys_rw_port_bram_din(),
     .core_sys_rw_port_bram_dout(),
     .core_sys_rw_port_bram_en(),
     .core_sys_rw_port_bram_we(),
-    .core_sys_rw_port_req_bl8_offs(),
-    .core_sys_rw_port_req_burst_num(),
-    .core_sys_rw_port_req_burst_size(),
-    .core_sys_rw_port_req_rdbusy(),
-    .core_sys_rw_port_req_rdreq(),
-    .core_sys_rw_port_req_row_base_addr(),
-    .core_sys_rw_port_req_wrbusy(),
-    .core_sys_rw_port_req_wrreq(),
+    .core_sys_rw_port_row_base_addr(),
+    .core_sys_rw_port_bl8_offs(),
+    .core_sys_rw_port_burst_num(),
+    .core_sys_rw_port_burst_size(),
+    .core_sys_rw_port_rw_req(),
+    .core_sys_rw_port_rw_mod(),
+    .core_sys_rw_port_rw_bsy(),
     .ips_mipi_csi_phy_rst(),
     .dbg_probe_mc_in_0(),
     .dbg_probe_mc_in_2(),
@@ -211,13 +212,6 @@ image_processing_pipeline_imp_PQRLL2 u_ipp (
     .ddr3_dqs_n(ddr3_dqs_n),
     .ddr3_dqs_p(ddr3_dqs_p),
     .ddr3_odt(ddr3_odt),
-    .ddr3_proxy_bram_mntr_addr(),
-    .ddr3_proxy_bram_mntr_clk(),
-    .ddr3_proxy_bram_mntr_din(),
-    .ddr3_proxy_bram_mntr_dout(),
-    .ddr3_proxy_bram_mntr_en(),
-    .ddr3_proxy_bram_mntr_rst(),
-    .ddr3_proxy_bram_mntr_we(),
     .ddr3_ras_n(ddr3_ras_n),
     .ddr3_reset_n(ddr3_reset_n),
     .ddr3_we_n(ddr3_we_n),
