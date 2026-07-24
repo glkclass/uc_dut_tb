@@ -21,7 +21,7 @@ LOG  := ${PWD_PATH}/${LOG}
 
 # debug: clean_log impl generate_bitstream copy_bin_file
 # debug: clean_log mc_create_release_project mc_copy_elf_file
-debug: program_uart_flash
+debug: program_n_flash
 	$(ECHO_HEADER)
 	$(SETUP_TOOLS)
 # 	source vivado_cli.sh -t $@
@@ -66,17 +66,25 @@ create_build_dbg_soc: clean_log create_vivado_project build_debug_soc
 # dut_tb rules
 dtb_build:
 	@cd ${DUT_TB_ROOT_PATH}/scrpt
-	@make build
+	@make build_tb
+
+dtb_elab:
+	@cd ${DUT_TB_ROOT_PATH}/scrpt
+	@make elab_tb
 
 dtb_run:
 	@cd ${DUT_TB_ROOT_PATH}/scrpt
-	@make run_tb
+	@make run
+
+dtb_view:
+	@cd ${DUT_TB_ROOT_PATH}/scrpt
+	@make view
 
 dtb_clean:
 	@cd ${DUT_TB_ROOT_PATH}/scrpt
 	@make clean
 
-dtb_debug:
+dtb_debug: dtb_run dtb_view
 	@cd ${DUT_TB_ROOT_PATH}/scrpt
 	@make debug
 
@@ -186,13 +194,19 @@ load_fpga:
 program_flash:
 	$(ECHO_HEADER)
 	$(SETUP_TOOLS)
-	source vivado_cli.sh -t program_flash
+	source vivado_cli.sh -t $@
 	$(ECHO_FOOTER)
 
 program_n_flash: clean_log
 	$(ECHO_HEADER)
 	$(SETUP_TOOLS)
-	source vivado_cli.sh -t program_n_flash
+	source vivado_cli.sh -t $@
+	$(ECHO_FOOTER)
+
+detect_jtag_targets: clean_log
+	$(ECHO_HEADER)
+	$(SETUP_TOOLS)
+	source vivado_cli.sh -t $@
 	$(ECHO_FOOTER)
 
 hw_debug: clean_log

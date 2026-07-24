@@ -4,7 +4,18 @@ root_path=".."
 
 # TODO: report_utilization
 
-tasks=("debug" "create_vivado_project" "update_vivado_project" "synth" "generate_bitstream" "impl" "generate_impl_artefacts" "generate_platform" "load_fpga" "program_flash" "program_n_flash")
+tasks=( "debug"
+        "create_vivado_project"
+        "update_vivado_project"
+        "synth"
+        "generate_bitstream"
+        "impl"
+        "generate_impl_artefacts"
+        "generate_platform"
+        "load_fpga"
+        "program_flash"
+        "program_n_flash"
+        "detect_jtag_targets" )
 
 declare -A task_desc
 task_desc[debug]="Debug"
@@ -73,6 +84,8 @@ function main {
         $task
     elif [[ "$task" == "program_n_flash" ]]; then
         $task
+    elif [[ "$task" == "detect_jtag_targets" ]]; then
+        $task
     elif [[ "$task" == "debug" ]]; then
         $task
     else
@@ -84,16 +97,18 @@ function main {
 
 
 function check_log_errors {
-    ERROR_PATTERN="(^ERROR:)|(^FATAL:)"
-
-    grep -En $ERROR_PATTERN $log_path
-    n_errors=`grep -Ec $ERROR_PATTERN $log_path`
-
-    if (( n_errors > 0 )); then
-        echo "ERROR | .. Failed. Terminated due to ${n_errors} error(s). See log for details: ${log_path}, 1."
-        exit 1
+    if [ -f "$log_path" ]; then
+        ERROR_PATTERN="(^ERROR:)|(^FATAL:)"
+        grep -En $ERROR_PATTERN $log_path
+        n_errors=`grep -Ec $ERROR_PATTERN $log_path`
+        if (( n_errors > 0 )); then
+            echo "ERROR | .. Failed. Terminated due to ${n_errors} error(s). See log for details: ${log_path}, 1."
+            exit 1
+        else
+            echo "INFO | .. Ok"
+        fi
     else
-        echo "INFO | .. Ok"
+        echo "WARNING | $log_path does not exist."
     fi
 }
 
@@ -164,36 +179,78 @@ function program_flash {
     check_log_errors
 }
 
+target_url="localhost:3121/xilinx_tcf/Digilent/"
+
+# Detect active jtag targets
+function detect_jtag_targets {
+    echo "INFO | Detect active jtag targets .."
+    active_targets_regex="active_hw_targets.*"
+    target_regex="^${target_url}[0-9A-F]+"
+    $VIVADO_BIN_TOOL -nolog -nojournal -notrace -mode batch -source vivado_cli_task.tcl -tclargs print_jtag_targets &>> $log_path
+    active_targets_line=$(grep -E $active_targets_regex $log_path)
+    for target in $active_targets_line; do
+        if [[ $target =~ $target_regex ]]; then
+            echo "INFO | Jtag target detected: $target"
+            targets+=($target)
+        fi
+    done
+    n_targets=${#targets[@]}
+    echo "INFO | Total number: $n_targets"
+    echo "INFO | ..Done"
+}
+
 
 function program_n_flash {
     [ ! -f $PROGRAM_BIN_STREAM ] && echo "ERROR | Can't find bin file: $PROGRAM_BIN_STREAM. Terminated!" && exit 1
-    # Detect active jtag connections
-    echo "INFO | Detect active targets .."
-    $VIVADO_BIN_TOOL -nolog -nojournal -notrace -mode batch -source vivado_cli_task.tcl -tclargs print_hw_targets &>> $log_path
-    active_targets_regex="active_hw_targets.*"
-    target_regex="^localhost:3121/xilinx_tcf/Digilent/[0-9A-F]+"
-    active_targets_line=$(grep -E $active_targets_regex $log_path)
-    echo "INFO | ..Done"
-    # echo $active_targets_line
 
-    # loop on active jtag connections
-    n_targets=0
-    for target in $active_targets_line; do
-        if [[ $target =~ $target_regex ]]; then
-            echo "INFO | Programming. Bitstream: ${PROGRAM_BIN_STREAM}. Config flash: $FLASH_DEVICE. Jtag target: $target."
-            $VIVADO_BIN_TOOL -nolog -nojournal -notrace -mode batch -source vivado_cli_task.tcl -tclargs program_flash $target &>> $log_path &
-            ((n_targets++))
+    targets=()
+    if [[ -n "$PROGRAM_JTAG_TARGET_ID" ]]; then
+        # Apply jtag targets to program
+        echo "INFO | Apply jtag targets using <PROGRAM_JTAG_TARGET_ID> env var setup"
+        for target_id in ${PROGRAM_JTAG_TARGET_ID//:/ }; do
+            echo "INFO | Jtag target applied: ${target_url}${target_id}"
+            targets+=("${target_url}${target_id}")
+        done
+        n_targets=${#targets[@]}
+        echo "INFO | Total number: $n_targets"
+    else
+        detect_jtag_targets
+        echo "INFO | For now autodetect doesn't work together with programming due to 'multiple hw_server runs' issue"
+        return
+    fi
+
+    # loop on applied jtag connections
+    for target in ${targets[@]}; do
+        echo "INFO | Programming. Bitstream: ${PROGRAM_BIN_STREAM}. Config flash: $FLASH_DEVICE. Jtag target: ${target}"
+        $VIVADO_BIN_TOOL -nolog -nojournal -notrace -mode batch -source vivado_cli_task.tcl -tclargs program_flash ${target} &>> $log_path
+
+        # polling hw_server process till is stopped
+        echo "INFO | Wait for hw_server stop.."
+        for ((i=0; i<=30; i++)); do
+            if ! pgrep -f hw_server > /dev/null; then
+                echo "INFO | ..hw_server stopped. Go to next target."
+                break
+            fi
+            # echo "INFO | hw_server is still running.."
+            sleep 2
+        done
+
+        # kill if still alive
+        if HW_SERVER_PID=$(pgrep -f hw_server); then
+            echo "WARNING | ..hw_server is still running. Terminating.."
+            kill "$HW_SERVER_PID"
+            sleep 1
+            if kill -0 "$HW_SERVER_PID" 2>/dev/null; then
+                kill -9 "$HW_SERVER_PID"
+            fi
+            echo "INFO | ..Done"
         fi
     done
     wait
 
-    if [[ $n_targets != 0 ]]; then
-        echo "INFO | $n_targets flash devices done. See log for details: $log_path."
-    else
-        echo "ERROR | No active connections detected!"
-    fi
-
+    echo "INFO | $n_targets flash devices done. See log for details: $log_path."
     check_log_errors
+    echo "INFO | Done"
 }
 
 

@@ -2,7 +2,7 @@ set CREATE_TOP_BD_TCL create_top_bd.tcl
 set CREATE_PROJECT_TCL create_vivado_project.tcl
 set ELF_FILE $env(VIVADO_IMPORTS)/$env(VIVADO_PROJECT_ELF_NAME)
 
-set TASKS {print_hw_targets create_vivado_project update_vivado_project add_block_design customize_config_flash synth impl generate_impl_artefacts generate_platform generate_bitstream load_fpga program_flash debug}
+set TASKS {print_jtag_targets create_vivado_project update_vivado_project add_block_design customize_config_flash synth impl generate_impl_artefacts generate_platform generate_bitstream load_fpga program_flash debug}
 
 
 # Debug stuff
@@ -13,13 +13,16 @@ proc debug { args_list } {
 }
 
 # Print active hw targets
-proc print_hw_targets { args_list } {
+proc print_jtag_targets { args_list } {
     try {
         open_hw_manager
         connect_hw_server -allow_non_jtag
         set active_hw_targets [get_hw_targets]
         puts "active_hw_targets: $active_hw_targets"
+        disconnect_hw_server [current_hw_server]
+        close_hw_manager
     } on error {msg info} {
+        puts "Failed.."
         puts $msg
         puts $info
         puts active_hw_targets
@@ -47,7 +50,7 @@ proc customize_config_flash { args_list } {
     global env
     open_project $env(VIVADO_PROJECT)
     open_bd_design $env(VIVADO_PROJECT_TOP_BD)
-    set config_flash_spi_w [lindex $args_list 1]
+    set config_flash_spi_w [lindex $args_list 0]
     if {$config_flash_spi_w == "SPIx4"} {
         set_property CONFIG.C_SPI_MEMORY {2} [get_bd_cells core_sys/config_flash_spi]
         set_property CONFIG.C_SPI_MODE {2} [get_bd_cells core_sys/config_flash_spi]
@@ -205,7 +208,6 @@ proc generate_bitstream { args_list } {
 # program fpga
 proc load_fpga { args_list } {
     global env
-
     open_hw_manager
     connect_hw_server -allow_non_jtag
     open_hw_target
@@ -216,6 +218,9 @@ proc load_fpga { args_list } {
     set_property PROGRAM.FILE $env(VIVADO_BIT_STREAM) [get_hw_devices $env(FPGA_DEVICE)]
     program_hw_devices [get_hw_devices $env(FPGA_DEVICE)]
     refresh_hw_device [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]
+    close_hw_target
+    disconnect_hw_server [current_hw_server]
+    close_hw_manager
 }
 
 
@@ -223,44 +228,61 @@ proc load_fpga { args_list } {
 proc program_flash { args_list } {
     global env
 
-    try {
-        open_hw_manager
-        connect_hw_server -allow_non_jtag
-
-        set args_size [llength $args_list]
-        if {$args_size > 1} {
-            set JTAG_TARGET [lindex $args_list 1]
-            open_hw_target $JTAG_TARGET
-        } else {
-            open_hw_target
-        }
-
-        current_hw_device [get_hw_devices $env(FPGA_DEVICE)]
-        refresh_hw_device -update_hw_probes false [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]
-        create_hw_cfgmem -hw_device [get_hw_devices $env(FPGA_DEVICE)] -mem_dev [lindex [get_cfgmem_parts $env(FLASH_DEVICE)] 0]
-        set_property PROGRAM.ADDRESS_RANGE  {use_file} [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]]
-        set_property PROGRAM.FILES [list $env(PROGRAM_BIN_STREAM) ] [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]]
-        set_property PROGRAM.PRM_FILE {} [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]]
-        set_property PROGRAM.UNUSED_PIN_TERMINATION {pull-none} [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]]
-        set_property PROGRAM.BLANK_CHECK  0 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]]
-        set_property PROGRAM.ERASE  1 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]]
-        set_property PROGRAM.CFG_PROGRAM  1 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]]
-        set_property PROGRAM.VERIFY  1 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]]
-        set_property PROGRAM.CHECKSUM  0 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]]
-        create_hw_bitstream -hw_device [lindex [get_hw_devices $env(FPGA_DEVICE)] 0] [get_property PROGRAM.HW_CFGMEM_BITFILE [ lindex [get_hw_devices $env(FPGA_DEVICE)] 0]]
-        program_hw_devices [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]
-        refresh_hw_device [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]
-        program_hw_cfgmem -hw_cfgmem [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]]
-    } on error {msg info} {
-        puts $msg
+    # Check if specific jtag targets were applied
+    set args_size [llength $args_list]
+    if {$args_size > 0} {
+        set JTAG_TARGETS $args_list
+    } else {
+        set JTAG_TARGETS {default}
     }
 
+
+    try {
+        foreach JTAG_TARGET $JTAG_TARGETS {
+            puts $JTAG_TARGET
+            open_hw_manager
+            # connect_hw_server -allow_non_jtag
+            connect_hw_server
+
+            if {$args_size > 0} {
+                open_hw_target $JTAG_TARGET
+            } else {
+                open_hw_target
+            }
+
+            current_hw_device [get_hw_devices $env(FPGA_DEVICE)]
+            refresh_hw_device [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]
+            create_hw_cfgmem -hw_device [get_hw_devices $env(FPGA_DEVICE)] -mem_dev [lindex [get_cfgmem_parts $env(FLASH_DEVICE)] 0]
+            set_property PROGRAM.ADDRESS_RANGE  {use_file} [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]]
+            set_property PROGRAM.FILES [list $env(PROGRAM_BIN_STREAM) ] [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]]
+            set_property PROGRAM.PRM_FILE {} [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]]
+            set_property PROGRAM.UNUSED_PIN_TERMINATION {pull-none} [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]]
+            set_property PROGRAM.BLANK_CHECK  0 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]]
+            set_property PROGRAM.ERASE  1 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]]
+            set_property PROGRAM.CFG_PROGRAM  1 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]]
+            set_property PROGRAM.VERIFY  1 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]]
+            set_property PROGRAM.CHECKSUM  0 [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]]
+            create_hw_bitstream -hw_device [lindex [get_hw_devices $env(FPGA_DEVICE)] 0] [get_property PROGRAM.HW_CFGMEM_BITFILE [ lindex [get_hw_devices $env(FPGA_DEVICE)] 0]]
+            program_hw_devices [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]
+            refresh_hw_device [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]
+            program_hw_cfgmem -hw_cfgmem [ get_property PROGRAM.HW_CFGMEM [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]]
+            close_hw_target
+            disconnect_hw_server [current_hw_server]
+            set current_hw_servers [get_hw_servers]
+            close_hw_manager
+        }
+    } on error {msg info} {
+        puts "Failed.."
+        puts $msg
+        puts $info
+        close_hw_manager
+    }
 }
 
-
+# main
+# extarct name of task to execute
 if {$argc > 0} {
     set task [lindex $argv 0]
-
     if {!($task in $TASKS)} {
         puts "ERROR | Unsupported task specified: <$task> !"
         exit 1
@@ -272,6 +294,12 @@ if {$argc > 0} {
     exit 1
 }
 
+# extract list of args if exists
+if {$argc > 1} {
+    set args [lrange $argv 1 end]
+} else {
+    set args {}
+}
 
-$task $argv
+$task $args
 exit 0
