@@ -43,7 +43,7 @@ endclass
 // ****************************************************************************************************************************
 function proxy_board_trigger_txn::new(string name = "proxy_board_trigger_txn");
     super.new(name);
-    trigger_gap = (IMAGE_N_COL + 2 * VSYNC_LEN) * IMAGE_N_ROW + TRIGGER_FRAME_START_GAP;
+    trigger_gap = (N_IMAGE_COL + 2 * VSYNC_LEN) * N_IMAGE_ROW + TRIGGER_FRAME_START_GAP;
 endfunction
 
 

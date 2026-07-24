@@ -18,7 +18,7 @@ class mipi_csi_axis_txn extends dutb_txn_base;
 
     typedef logic     [IMAGE_PIXEL_W - 1  :   0]    t_pixel;
     u_shortint                                      frame_number;
-    t_pixel                                         image[IMAGE_N_ROW][IMAGE_N_COL];
+    t_pixel                                         image[N_IMAGE_ROW][N_IMAGE_COL];
 
     static u_shortint                               frame_idx = 16'd0;
 
@@ -98,8 +98,8 @@ task mipi_csi_axis_txn::recieve_image();
                                 end
 
                             n_image_row = csi_vif.mipi_csi_row_number - 1;
-                            assert(n_image_row < IMAGE_N_ROW) else `uvm_fatal("MNTR", $sformatf("Image row = %d", n_image_row));
-                            assert(n_image_col < IMAGE_N_COL) else `uvm_fatal("MNTR", $sformatf("Image col = %d", n_image_col));
+                            assert(n_image_row < N_IMAGE_ROW) else `uvm_fatal("MNTR", $sformatf("Image row = %d", n_image_row));
+                            assert(n_image_col < N_IMAGE_COL) else `uvm_fatal("MNTR", $sformatf("Image col = %d", n_image_col));
                             assert(n_image_row == n_image_row_d + 1) else `uvm_fatal("MNTR", $sformatf("Image row previous, current = %d, %d", n_image_row_d, n_image_row));
                             `uvm_debug_txn($sformatf("Image row/col/data = %02d / %02d / 0x%04h / 0x%04h / 0x%04h / 0x%04h", n_image_row, n_image_col, csi_vif.axis_tword[0], csi_vif.axis_tword[1], csi_vif.axis_tword[2], csi_vif.axis_tword[3]));
                             for (int i = 0; i < 4; i++) image[n_image_row][n_image_col + i] = csi_vif.axis_tword[i];
@@ -108,9 +108,9 @@ task mipi_csi_axis_txn::recieve_image();
                             if (csi_vif.axis_tlast)
                                 begin
                                     `uvm_debug_txn($sformatf("axis_tlast %d", csi_vif.axis_tlast));
-                                    assert (IMAGE_N_COL== n_image_col) else `uvm_fatal("MNTR", $sformatf("Image col = %d", n_image_col));
+                                    assert (N_IMAGE_COL== n_image_col) else `uvm_fatal("MNTR", $sformatf("Image col = %d", n_image_col));
                                     n_image_col = 0;
-                                    frame_recieved = ((IMAGE_N_ROW - 1) == n_image_row) ? 1'b1: 1'b0;
+                                    frame_recieved = ((N_IMAGE_ROW - 1) == n_image_row) ? 1'b1: 1'b0;
                                     n_image_row_d = n_image_row;  // remember last row number
                                 end
 

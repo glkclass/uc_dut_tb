@@ -20,7 +20,7 @@ extends dutb_txn_base;
     int hsync_len, vsync_len, n_image_col;
 
     typedef logic     [IMAGE_PIXEL_W - 1  :   0]        t_pixel;
-    rand    t_pixel                                     image[IMAGE_N_ROW][IMAGE_N_COL + BBL_NUM];
+    rand    t_pixel                                     image[N_IMAGE_ROW][N_IMAGE_COL + BBL_NUM];
 
 
 
@@ -49,7 +49,7 @@ function proxy_board_image_txn::new(string name = "proxy_board_image_txn");
     super.new(name);
     vsync_len = (BBL_MODE) ? VSYNC_LEN : VSYNC_LEN + BBL_NUM;
     hsync_len = vsync_len + 1;
-    n_image_col = (BBL_MODE) ? IMAGE_N_COL + BBL_NUM : IMAGE_N_COL;
+    n_image_col = (BBL_MODE) ? N_IMAGE_COL + BBL_NUM : N_IMAGE_COL;
 endfunction
 
 
@@ -89,7 +89,7 @@ task proxy_board_image_txn::generate_image();
         begin
             pb_vif.data = 16'dx;
 
-            for (int i = 0; i < IMAGE_N_ROW; i = i + 1)
+            for (int i = 0; i < N_IMAGE_ROW; i = i + 1)
                 begin
                     pb_vif.hsync = 1'b0;
                     repeat(hsync_len)

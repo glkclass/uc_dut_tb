@@ -67,9 +67,9 @@ task `TXN_NAME::drive(input dutb_if_proxy_base dutb_if);
     vif.coeff_table_ddr3_base_addr = `DDR3_MEMORY_CYCLIC_COEFF_TABLE_BASE_ADDR >> 11;
 
     vif.ips[`IPS_FPS_OFFS] = (60 == fps) ? `IPS_FPS_60 : `IPS_FPS_30;
-    vif.ips[`IPS_PP_TYPE_OFFS + `IPS_PP_TYPE_WIDTH - 1    :   `IPS_PP_TYPE_OFFS] = pp_mode;
+    vif.ips[`IPS_MIPI_CSI_PP_MODE_OFFS + `IPS_MIPI_CSI_UVC_PP_MODE_WIDTH - 1    :   `IPS_MIPI_CSI_PP_MODE_OFFS] = pp_mode;
     vif.ips[`IPS_MIPI_CSI_STREAM_EN_OFFS] = mipi_csi_stream_en;
-    vif.ips[`IPS_MIPI_CSI_DATA_FORMAT_OFFS + `IPS_MIPI_CSI_DATA_FORMAT_WIDTH - 1    :   `IPS_MIPI_CSI_DATA_FORMAT_OFFS] = mipi_csi_data_format;
+    vif.ips[`IPS_MIPI_CSI_DATA_FORMAT_OFFS + `IPS_MIPI_CSI_UVC_DATA_FORMAT_WIDTH - 1    :   `IPS_MIPI_CSI_DATA_FORMAT_OFFS] = mipi_csi_data_format;
     vif.ips[`IPS_UVC_STREAM_EN_OFFS] = uvc_stream_en;
     vif.ips[`IPS_TRIGGER_EN_OFFS] = trigger_en;
     vif.ips[`IPS_DPM_EN_OFFS] = dpm_en;

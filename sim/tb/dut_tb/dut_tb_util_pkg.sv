@@ -18,7 +18,7 @@ package dut_tb_util_pkg;
         T_RST_N_LEN             = 3us;
 
 
-    typedef     logic[15:0]                                 t_pixel;
+    typedef     logic[16 - 1    :   0]                                 t_pixel;
 
 endpackage
 // ****************************************************************************************************************************

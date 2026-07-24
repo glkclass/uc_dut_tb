@@ -33,7 +33,7 @@ endinterface
 
 
 interface sys_if ();
-    logic   [16 - 1             :   0]      ips;
+    logic   [32 - 1             :   0]      ips;
     logic   [8 - 1              :   0]      ipst;
     logic   [18 - 1             :   0]      coeff_table_ddr3_base_addr;
 endinterface
