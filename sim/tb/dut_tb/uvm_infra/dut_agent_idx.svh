@@ -9,6 +9,7 @@
 // DUTB agents
 enum {
     INIT_IPS = 0,
+    FFC_REQ,
     INIT_DDR3,
     PROXY_BOARD_IMAGE,
     MIPI_CSI_AXIS,

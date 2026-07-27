@@ -5,6 +5,7 @@ SHELL=/bin/bash
 export
 
 -include user_env
+
 export
 
 # generate backup folder unic name
@@ -84,7 +85,7 @@ dtb_clean:
 	@cd ${DUT_TB_ROOT_PATH}/scrpt
 	@make clean
 
-dtb_debug: dtb_run dtb_view
+dtb_debug:dtb_run dtb_view
 	@cd ${DUT_TB_ROOT_PATH}/scrpt
 	@make debug
 

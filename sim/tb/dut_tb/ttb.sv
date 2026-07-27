@@ -125,7 +125,6 @@ module ttb;
   assign dut_if_h.csi_vif.axis_tvalid                         =   u_ipp.mipi_csi_axis_tvalid;
 
   // core sys rw if
-  assign dut_if_h.core_sys_rw_vif.clk                         =   u_ipp.core_sys_rw_port_clk;
   assign u_ipp.core_sys_rw_port_rw_req                        =   dut_if_h.core_sys_rw_vif.rw_req;
   assign u_ipp.core_sys_rw_port_rw_mod                        =   dut_if_h.core_sys_rw_vif.rw_mod;
   assign u_ipp.core_sys_rw_port_row_base_addr                 =   dut_if_h.core_sys_rw_vif.row_base_addr;
@@ -142,7 +141,7 @@ module ttb;
 
 
   // sns rd ddr3
-  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_clk                =   u_ipp.sens_streamer.inst.rd_coeff_clk;
+  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_clk                =   u_ipp.sens_streamer.inst.i_sys_clk;
   assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_rw_req             =   u_ipp.sens_streamer.inst.rd_coeff_rw_req;
   assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_rw_bsy             =   u_ipp.sens_streamer.inst.rd_coeff_rw_bsy;
   assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_row_base_addr      =   u_ipp.sens_streamer.inst.rd_coeff_row_base_addr;
@@ -155,8 +154,8 @@ module ttb;
 
 
   // sns rd coeff
-  assign dut_if_h.sns_rd_coeff_vif.row_start_sys_clk          =   u_ipp.sens_streamer.inst.row_start              ;
   assign dut_if_h.sns_rd_coeff_vif.i_sensor_pixel_clk         =   u_ipp.sens_streamer.inst.i_sensor_pixel_clk     ;
+  assign dut_if_h.sns_rd_coeff_vif.row_start_sys_clk          =   u_ipp.sens_streamer.inst.row_start              ;
   assign dut_if_h.sns_rd_coeff_vif.coeff_pixel_valid          =   u_ipp.sens_streamer.inst.coeff_pixel_valid      ;
   assign dut_if_h.sns_rd_coeff_vif.coeff_ram_addr_b           =   u_ipp.sens_streamer.inst.coeff_ram_addr_b       ;
   assign dut_if_h.sns_rd_coeff_vif.coeff_ram_data_b           =   u_ipp.sens_streamer.inst.coeff_ram_data_b       ;
@@ -185,7 +184,6 @@ oct640_cu_clk_store_sys_0 clk_store_sys (
 image_processing_pipeline_imp_PQRLL2 u_ipp (
   .bba(),
   .coeff_table_ddr3_base_addr(dut_if_h.sys_vif.coeff_table_ddr3_base_addr),
-  .core_sys_rw_port_clk(),
   .core_sys_rw_port_bram_addr(),
   .core_sys_rw_port_bram_din(),
   .core_sys_rw_port_bram_dout(),

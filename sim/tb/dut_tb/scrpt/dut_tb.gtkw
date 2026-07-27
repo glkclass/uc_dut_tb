@@ -1,24 +1,24 @@
 [*]
 [*] GTKWave Analyzer v3.3.104 (w)1999-2020 BSI
-[*] Wed Jul 15 16:20:43 2026
+[*] Thu Jul 30 08:52:15 2026
 [*]
 [dumpfile] "/home/anton.voloshchuk/design/oct640_cu/oct640_cu_dut_tb/sim/tb/dut_tb/scrpt/build/wf.vcd"
-[dumpfile_mtime] "Wed Jul 15 16:20:04 2026"
-[dumpfile_size] 78396168
+[dumpfile_mtime] "Wed Jul 29 15:49:35 2026"
+[dumpfile_size] 279372309
 [savefile] "/home/anton.voloshchuk/design/oct640_cu/oct640_cu_dut_tb/sim/tb/dut_tb/scrpt/dut_tb.gtkw"
-[timestart] 115440000
+[timestart] 1291160000
 [size] 2558 1365
 [pos] -1 -1
-*-22.483984 122390000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+*-23.483984 1319310000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
 [treeopen] ttb.
 [treeopen] ttb.u_ipp.
 [treeopen] ttb.u_ipp.ddr3_sm_core_frontend.
 [treeopen] ttb.u_ipp.ddr3_sm_core_frontend.inst.
 [treeopen] ttb.u_ipp.ddr3_sm_core_request_handler.
-[treeopen] ttb.u_ipp.sens_streamer.
+[treeopen] ttb.u_ipp.ffc_ddr3_streamer.
 [treeopen] ttb.u_ipp.sens_streamer.inst.
-[sst_width] 413
-[signals_width] 422
+[sst_width] 295
+[signals_width] 421
 [sst_expanded] 1
 [sst_vpaned_height] 623
 @c00200
@@ -52,7 +52,7 @@
 -empty
 @200
 -
-@800200
+@c00200
 -clk
 @28
 ttb.dut_if_h.rst_n
@@ -61,11 +61,11 @@ ttb.u_ipp.sys_135_clk
 ttb.u_ipp.ddr_clk
 ttb.u_ipp.ddr_270_clk
 ttb.u_ipp.ref_clk
-@1000200
+@1401200
 -clk
 @200
 -
-@800200
+@c00200
 -sens streamer
 @200
 -
@@ -92,7 +92,7 @@ ttb.u_ipp.sens_streamer.inst.i_proxy_board_status_checker.strobe_re
 ttb.u_ipp.sens_streamer.inst.i_proxy_board_status_checker.sys_clk_cnt[6:0]
 @1401200
 -pb_status_checker
-@800200
+@c00200
 -pb_if
 @28
 ttb.proxy_board_master_clk
@@ -110,7 +110,7 @@ ttb.u_ipp.sens_streamer.inst.sensor_hsync
 -
 @28
 ttb.u_ipp.sens_streamer.inst.frame_start
-@1000200
+@1401200
 -pb_if
 @c00200
 -sys_clk
@@ -133,7 +133,6 @@ ttb.u_ipp.sens_streamer.inst.frame_start_sys_clk_d[1:0]
 @c00200
 -rd_ddr3_dp_mask
 @28
-ttb.u_ipp.sens_streamer.inst.rd_dp_mask_clk
 ttb.u_ipp.sens_streamer.inst.rd_dp_mask_rw_req
 ttb.u_ipp.sens_streamer.inst.rd_dp_mask_rw_mod
 ttb.u_ipp.sens_streamer.inst.rd_dp_mask_rw_bsy
@@ -146,7 +145,6 @@ ttb.u_ipp.sens_streamer.inst.rd_dp_mask_bram_din[63:0]
 @c00200
 -rd_ddr3_coeff
 @28
-ttb.u_ipp.sens_streamer.inst.rd_coeff_clk
 ttb.u_ipp.sens_streamer.inst.rd_coeff_rw_req
 ttb.u_ipp.sens_streamer.inst.rd_coeff_rw_mod
 ttb.u_ipp.sens_streamer.inst.rd_coeff_rw_bsy
@@ -362,17 +360,80 @@ ttb.u_ipp.sens_streamer.inst.u_dead_pixel_masker.line_start_pixel[15:0]
 -dead_pixel_masker
 @200
 -
-@1000200
+@1401200
 -sens streamer
 @200
 -
+@c00200
+-ffc_ddr3_streamer
+@28
+ttb.u_ipp.ffc_ddr3_streamer.inst.i_sys_clk
+ttb.u_ipp.ffc_ddr3_streamer.inst.i_sys_rst_n
+@200
 -
+@28
+ttb.u_ipp.ffc_ddr3_streamer.inst.i_ffc_request
+ttb.u_ipp.ffc_ddr3_streamer.inst.o_ffc_processed
+@200
+-
+@28
+ttb.u_ipp.ffc_ddr3_streamer.inst.ffc_sens_img_frame_start
+ttb.u_ipp.ffc_ddr3_streamer.inst.ffc_sens_img_row_ready
+ttb.u_ipp.ffc_ddr3_streamer.inst.img_row_ready
+@22
+ttb.u_ipp.ffc_ddr3_streamer.inst.ffc_sens_img_frame_number[15:0]
+ttb.u_ipp.ffc_ddr3_streamer.inst.ffc_sens_img_row_number[8:0]
+@28
+ttb.u_ipp.ffc_ddr3_streamer.inst.ffc_sens_img_ram_en
+@22
+ttb.u_ipp.ffc_ddr3_streamer.inst.ffc_sens_img_ram_addr[7:0]
+ttb.u_ipp.ffc_ddr3_streamer.inst.ffc_sens_img_ram_data[63:0]
+@200
+-
+@28
+ttb.u_ipp.ffc_ddr3_streamer.inst.wr_img_frame_rw_req
+ttb.u_ipp.ffc_ddr3_streamer.inst.wr_img_frame_rw_mod
+ttb.u_ipp.ffc_ddr3_streamer.inst.wr_img_frame_rw_bsy
+@22
+ttb.u_ipp.ffc_ddr3_streamer.inst.wr_img_frame_row_base_addr[17:0]
+ttb.u_ipp.ffc_ddr3_streamer.inst.wr_img_frame_bl8_offs[6:0]
+@28
+ttb.u_ipp.ffc_ddr3_streamer.inst.wr_img_frame_burst_num[2:0]
+@22
+ttb.u_ipp.ffc_ddr3_streamer.inst.wr_img_frame_burst_size[6:0]
+@200
+-
+@28
+ttb.u_ipp.ffc_ddr3_streamer.inst.wr_img_frame_bram_en
+@22
+ttb.u_ipp.ffc_ddr3_streamer.inst.wr_img_frame_bram_addr[7:0]
+ttb.u_ipp.ffc_ddr3_streamer.inst.wr_img_frame_bram_dout[63:0]
+@200
+-
+@28
+ttb.u_ipp.ffc_ddr3_streamer.inst.ffc_request
+@22
+ttb.u_ipp.ffc_ddr3_streamer.inst.ffc_frame_cnt[5:0]
+ttb.u_ipp.ffc_ddr3_streamer.inst.ffc_row_cnt[8:0]
+@28
+ttb.u_ipp.ffc_ddr3_streamer.inst.pr_state[2:0]
+ttb.u_ipp.ffc_ddr3_streamer.inst.next_state[2:0]
+@200
+-
+-
+@1401200
+-ffc_ddr3_streamer
+@200
 -
 @800200
 -ddr3_req_handler
 @28
 ttb.u_ipp.ddr3_sm_core_request_handler.inst.wdt_en
 ttb.u_ipp.ddr3_sm_core_request_handler.inst.wdt_over
+@22
+ttb.u_ipp.ddr3_sm_core_request_handler.inst.processed_request[3:0]
+ttb.u_ipp.ddr3_sm_core_request_handler.inst.request_queue[3:0]
+ttb.u_ipp.ddr3_sm_core_request_handler.inst.request_register[3:0]
 @200
 -
 -
@@ -380,7 +441,6 @@ ttb.u_ipp.ddr3_sm_core_request_handler.inst.wdt_over
 @c00200
 -sm_rw_port
 @28
-ttb.u_ipp.ddr3_sm_core_request_handler.inst.sm_core_rw_port_clk
 [color] 3
 ttb.u_ipp.ddr3_sm_core_request_handler.inst.sm_core_rw_port_rw_req
 [color] 3
@@ -412,13 +472,13 @@ ttb.u_ipp.ddr3_sm_core_request_handler.inst.sm_core_rw_port_bram_dout[63:0]
 -sm_rw_port
 @200
 -
-@800200
+@800201
 -rd_port_0
-@28
+@29
 ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_rw_req
 ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_rw_mod
 ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_rw_bsy
-@c00022
+@c00023
 #{rd_port_0_txn_info} (0)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_row_base_addr[17:0] (1)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_row_base_addr[17:0] (2)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_row_base_addr[17:0] (3)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_row_base_addr[17:0] (4)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_row_base_addr[17:0] (5)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_row_base_addr[17:0] (6)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_row_base_addr[17:0] (7)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_row_base_addr[17:0] (8)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_row_base_addr[17:0] (9)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_row_base_addr[17:0] (10)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_row_base_addr[17:0] (11)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_row_base_addr[17:0] (12)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_row_base_addr[17:0] (13)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_row_base_addr[17:0] (14)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_row_base_addr[17:0] (15)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_row_base_addr[17:0] (16)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_row_base_addr[17:0] (17)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_row_base_addr[17:0] (0)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_bl8_offs[6:0] (1)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_bl8_offs[6:0] (2)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_bl8_offs[6:0] (3)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_bl8_offs[6:0] (4)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_bl8_offs[6:0] (5)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_bl8_offs[6:0] (6)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_bl8_offs[6:0] (0)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_burst_num[2:0] (1)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_burst_num[2:0] (2)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_burst_num[2:0] (0)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_burst_size[6:0] (1)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_burst_size[6:0] (2)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_burst_size[6:0] (3)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_burst_size[6:0] (4)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_burst_size[6:0] (5)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_burst_size[6:0] (6)ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_burst_size[6:0]
 @22
 ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_row_base_addr[17:0]
@@ -427,9 +487,9 @@ ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_bl8_offs[6:0]
 ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_burst_num[2:0]
 @22
 ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_0_burst_size[6:0]
-@1401200
+@1401201
 -group_end
-@c00022
+@c00023
 #{rd_port_0_bram_if} ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_en ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_we (0)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_addr[10:0] (1)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_addr[10:0] (2)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_addr[10:0] (3)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_addr[10:0] (4)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_addr[10:0] (5)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_addr[10:0] (6)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_addr[10:0] (7)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_addr[10:0] (8)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_addr[10:0] (9)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_addr[10:0] (10)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_addr[10:0] (0)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (1)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (2)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (3)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (4)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (5)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (6)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (7)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (8)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (9)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (10)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (11)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (12)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (13)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (14)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (15)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (16)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (17)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (18)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (19)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (20)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (21)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (22)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (23)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (24)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (25)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (26)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (27)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (28)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (29)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (30)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (31)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (32)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (33)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (34)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (35)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (36)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (37)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (38)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (39)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (40)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (41)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (42)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (43)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (44)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (45)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (46)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (47)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (48)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (49)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (50)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (51)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (52)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (53)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (54)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (55)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (56)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (57)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (58)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (59)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (60)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (61)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (62)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0] (63)ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0]
 @28
 ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_en
@@ -437,13 +497,13 @@ ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_we
 @22
 ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_addr[10:0]
 ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_0_bram_din[63:0]
-@1401200
+@1401201
 -group_end
-@1000200
+@1000201
 -rd_port_0
 @200
 -
-@800200
+@c00200
 -rd_port_1
 @28
 ttb.u_ipp.ddr3_sm_core_request_handler.inst.rd_port_1_rw_req
@@ -470,17 +530,20 @@ ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_1_bram_addr[10:0]
 ttb.u_ipp.ddr3_sm_core_request_handler.rd_port_1_bram_din[63:0]
 @1401200
 -group_end
-@1000200
 -rd_port_1
-@c00200
+@200
+-
+@800200
 -wr_port_0
 @28
 ttb.u_ipp.ddr3_sm_core_request_handler.inst.wr_port_0_rw_req
 ttb.u_ipp.ddr3_sm_core_request_handler.inst.wr_port_0_rw_mod
 ttb.u_ipp.ddr3_sm_core_request_handler.inst.wr_port_0_rw_bsy
-@1401200
+@1000200
 -wr_port_0
-@800200
+@200
+-
+@c00200
 -rw_port_0
 @28
 ttb.u_ipp.ddr3_sm_core_request_handler.inst.rw_port_0_rw_req
@@ -497,7 +560,7 @@ ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_burst_num[2:0]
 ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_burst_size[6:0]
 @1401200
 -group_end
-@c00023
+@c00022
 #{rw_port_0_bram_if} ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_en ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_we (0)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_addr[10:0] (1)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_addr[10:0] (2)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_addr[10:0] (3)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_addr[10:0] (4)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_addr[10:0] (5)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_addr[10:0] (6)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_addr[10:0] (7)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_addr[10:0] (8)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_addr[10:0] (9)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_addr[10:0] (10)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_addr[10:0] (0)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (1)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (2)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (3)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (4)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (5)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (6)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (7)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (8)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (9)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (10)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (11)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (12)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (13)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (14)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (15)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (16)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (17)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (18)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (19)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (20)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (21)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (22)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (23)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (24)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (25)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (26)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (27)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (28)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (29)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (30)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (31)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (32)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (33)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (34)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (35)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (36)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (37)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (38)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (39)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (40)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (41)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (42)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (43)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (44)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (45)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (46)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (47)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (48)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (49)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (50)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (51)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (52)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (53)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (54)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (55)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (56)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (57)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (58)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (59)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (60)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (61)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (62)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (63)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0] (0)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (1)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (2)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (3)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (4)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (5)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (6)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (7)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (8)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (9)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (10)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (11)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (12)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (13)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (14)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (15)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (16)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (17)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (18)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (19)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (20)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (21)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (22)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (23)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (24)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (25)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (26)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (27)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (28)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (29)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (30)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (31)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (32)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (33)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (34)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (35)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (36)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (37)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (38)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (39)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (40)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (41)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (42)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (43)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (44)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (45)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (46)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (47)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (48)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (49)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (50)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (51)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (52)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (53)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (54)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (55)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (56)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (57)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (58)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (59)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (60)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (61)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (62)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0] (63)ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0]
 @28
 ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_en
@@ -506,10 +569,10 @@ ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_we
 ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_addr[10:0]
 ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_din[63:0]
 ttb.u_ipp.ddr3_sm_core_request_handler.sm_core_rw_port_bram_dout[63:0]
-@1401201
+@1401200
 -group_end
-@1000200
 -rw_port_0
+@1000200
 -ddr3_req_handler
 @200
 -
@@ -536,6 +599,8 @@ ttb.u_ipp.ddr3_sm_core_frontend.inst.u_ddr3_sm_core_phy.o_ddr3_we_n
 @1401200
 -ddr3_sm_core
 @200
+-
+-
 -
 -
 -

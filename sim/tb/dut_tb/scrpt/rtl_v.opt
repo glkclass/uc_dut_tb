@@ -17,5 +17,9 @@
 ../${RTL_PATH}/core/ddr3_sm_core/ddr3_sm_core_request_handler.v
 ../${RTL_PATH}/core/ddr3_sm_core/ddr3_sm_core_phy.v
 ../${RTL_PATH}/core/ddr3_sm_core/ddr3_sm_core_frontend.v
+../${RTL_PATH}/core/ffc_ddr3_streamer.v
+../${RTL_PATH}/core/mipi_csi_axis_streamer.v
+../${RTL_PATH}/core/fake_proxy_board.v
+../${RTL_PATH}/core/sens_streamer.v
 ../${BD_GEN_PATH}/sim/oct640_cu.v
 

@@ -26,6 +26,7 @@ package dut_tb_pkg;
 
     // txn
     `include "uvm_infra/init_ips_txn.svh"
+    `include "uvm_infra/ffc_req_txn.svh"
     `include "uvm_infra/init_ddr3_txn.svh"
     `include "uvm_infra/sns_rd_coeff_txn.svh"
     `include "uvm_infra/sns_rd_ddr3_txn.svh"

@@ -431,7 +431,8 @@ proc create_hier_cell_ddr3_proxy { parentCell nameHier } {
   connect_bd_net -net aclk_0_1  [get_bd_pins sys_clk] \
   [get_bd_pins ddr3_proxy_if/s_axi_aclk] \
   [get_bd_pins ddr3_proxy_req_rsp/s_axi_aclk] \
-  [get_bd_pins ddr3_proxy_txn_info/s_axi_aclk]
+  [get_bd_pins ddr3_proxy_txn_info/s_axi_aclk] \
+  [get_bd_pins ddr3_rw_proxy/i_sys_clk]
   connect_bd_net -net ddr3_proxy_req_rsp_gpio_io_o  [get_bd_pins ddr3_proxy_req_rsp/gpio_io_o] \
   [get_bd_pins ddr3_rw_proxy/ddr3_proxy_req]
   connect_bd_net -net ddr3_proxy_txn_info_gpio2_io_o  [get_bd_pins ddr3_proxy_txn_info/gpio2_io_o] \
@@ -977,6 +978,8 @@ proc create_hier_cell_image_processing_pipeline { parentCell nameHier } {
   [get_bd_pins dbg_probe_mc_in_0]
   connect_bd_net -net dbg_probe_mux_wrapper_dbg_probe_mc_in_2  [get_bd_pins dbg_probe_mux_wrapper/dbg_probe_mc_in_2] \
   [get_bd_pins dbg_probe_mc_in_2]
+  connect_bd_net -net ffc_ddr3_streamer_o_ffc_processed  [get_bd_pins ffc_ddr3_streamer/o_ffc_processed] \
+  [get_bd_pins ipst_mux/In3]
   connect_bd_net -net i_fr30_clk_0_1  [get_bd_pins fr30_clk] \
   [get_bd_pins pb_master_clk_mux/i_fr30_clk]
   connect_bd_net -net i_fr60_clk_0_1  [get_bd_pins fr60_clk] \
@@ -987,8 +990,8 @@ proc create_hier_cell_image_processing_pipeline { parentCell nameHier } {
   [get_bd_pins ddr3_sm_core_frontend/i_power_down]
   connect_bd_net -net ilconstant_1_dout  [get_bd_pins coeff_table_ddr3_base_addr] \
   [get_bd_pins sens_streamer/i_coeff_table_row_base_addr]
-  connect_bd_net -net ips_demux_o_ffc_start  [get_bd_pins ips_demux/o_ffc_start] \
-  [get_bd_pins ffc_ddr3_streamer/i_ffc_start]
+  connect_bd_net -net ips_demux_o_ffc_request  [get_bd_pins ips_demux/o_ffc_request] \
+  [get_bd_pins ffc_ddr3_streamer/i_ffc_request]
   connect_bd_net -net ips_demux_o_ips_dpm_en  [get_bd_pins ips_demux/o_ips_dpm_en] \
   [get_bd_pins sens_streamer/i_ips_dpm_en]
   connect_bd_net -net ips_demux_o_ips_fps  [get_bd_pins ips_demux/o_ips_fps] \
@@ -1032,7 +1035,6 @@ proc create_hier_cell_image_processing_pipeline { parentCell nameHier } {
   [get_bd_pins ipst_mux/In0]
   connect_bd_net -net sens_streamer_o_trigger_active  [get_bd_pins sens_streamer/o_trigger_status] \
   [get_bd_pins ipst_mux/In1] \
-  [get_bd_pins ipst_mux/In3] \
   [get_bd_pins ipst_mux/In4] \
   [get_bd_pins ipst_mux/In5] \
   [get_bd_pins ipst_mux/In6] \
