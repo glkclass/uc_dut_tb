@@ -2,7 +2,22 @@ set CREATE_TOP_BD_TCL create_top_bd.tcl
 set CREATE_PROJECT_TCL create_vivado_project.tcl
 set ELF_FILE $env(VIVADO_IMPORTS)/$env(VIVADO_PROJECT_ELF_NAME)
 
-set TASKS {print_jtag_targets create_vivado_project update_vivado_project add_block_design customize_config_flash synth impl generate_impl_artefacts generate_platform generate_bitstream load_fpga program_flash debug}
+set TASKS { print_jtag_targets
+            create_vivado_project
+            update_vivado_project
+            add_block_design
+            customize_config_flash
+            synth
+            impl
+            generate_impl_artefacts
+            generate_platform
+            generate_bitstream
+            generate_aes_bitstream
+            upload_fpga_vivado
+            upload_config_flash_vivado
+            program_aes_key_vivado
+            debug
+}
 
 
 # Debug stuff
@@ -50,14 +65,14 @@ proc customize_config_flash { args_list } {
     global env
     open_project $env(VIVADO_PROJECT)
     open_bd_design $env(VIVADO_PROJECT_TOP_BD)
-    set config_flash_spi_w [lindex $args_list 0]
-    if {$config_flash_spi_w == "SPIx4"} {
-        set_property CONFIG.C_SPI_MEMORY {2} [get_bd_cells core_sys/config_flash_spi]
-        set_property CONFIG.C_SPI_MODE {2} [get_bd_cells core_sys/config_flash_spi]
-        set_property CONFIG.C_FIFO_DEPTH {256} [get_bd_cells core_sys/config_flash_spi]
-    } elseif {$config_flash_spi_w == "SPIx1"} {
-        set_property CONFIG.C_SPI_MODE {0} [get_bd_cells core_sys/config_flash_spi]
-        set_property CONFIG.C_FIFO_DEPTH {256} [get_bd_cells core_sys/config_flash_spi]
+    set config_flash_spi_interface [lindex $args_list 0]
+    if {$config_flash_spi_interface == "X4"} {
+        set_property CONFIG.C_SPI_MEMORY {2} [get_bd_cells core_sys/low_speed_ports/config_flash_spi]
+        set_property CONFIG.C_SPI_MODE {2} [get_bd_cells core_sys/low_speed_ports/config_flash_spi]
+        set_property CONFIG.C_FIFO_DEPTH {256} [get_bd_cells core_sys/low_speed_ports/config_flash_spi]
+    } elseif {$config_flash_spi_interface == "X1"} {
+        set_property CONFIG.C_SPI_MODE {0} [get_bd_cells core_sys/low_speed_ports/config_flash_spi]
+        set_property CONFIG.C_FIFO_DEPTH {256} [get_bd_cells core_sys/low_speed_ports/config_flash_spi]
     }
     save_bd_design
 }
@@ -194,19 +209,59 @@ proc generate_impl_artefacts { args_list } {
 }
 
 
+# generate encrtypted bitstreams
+proc generate_aes_bitstream { args_list } {
+    global env
+    if {"x4" == $env(FLASH_SPI_INTERFACE)} {
+      set SPI_INTERFACE "SPIx4"
+    } elseif {"x1" == $env(FLASH_SPI_INTERFACE)} {
+      set SPI_INTERFACE "SPIx1"
+    } else {
+      puts "ERROR | No flash SPI interface defined !"
+      exit 1
+    }
+
+    set aes256_key 256'h$env(AES256_KEY)
+    set hmac256_key 256'h$env(HMAC256_KEY)
+    set startcbc128_key 128'h$env(STARTCBC128_KEY)
+
+    open_project $env(VIVADO_PROJECT)
+    open_run impl_1
+    set_property BITSTREAM.ENCRYPTION.ENCRYPT YES [current_design]
+    set_property BITSTREAM.ENCRYPTION.ENCRYPTKEYSELECT BBRAM [current_design]
+    set_property BITSTREAM.ENCRYPTION.KEYFILE $env(AES_KEY_FILE) [current_design]
+    # set_property BITSTREAM.ENCRYPTION.KEY0 $aes256_key [current_design]
+    # set_property BITSTREAM.ENCRYPTION.HKEY $hmac256_key [current_design]
+    # set_property BITSTREAM.ENCRYPTION.STARTCBC $startcbc128_key [current_design]
+    program_hw_devices -help
+    write_bitstream -force $env(VIVADO_BIT_STREAM)
+    write_cfgmem  -format bin -size $env(VIVADO_BIN_STREAM_SIZE) -interface ${SPI_INTERFACE} -loadbit "up 0x00000000 $env(VIVADO_BIT_STREAM)" -checksum -force -file $env(VIVADO_BIN_STREAM)
+    close_project
+}
+
+
 # generate bitstreams
 proc generate_bitstream { args_list } {
     global env
+    if {"x4" == $env(FLASH_SPI_INTERFACE)} {
+      set SPI_INTERFACE "SPIx4"
+    } elseif {"x1" == $env(FLASH_SPI_INTERFACE)} {
+      set SPI_INTERFACE "SPIx1"
+    } else {
+      puts "ERROR | No flash SPI interface defined !"
+      exit 1
+    }
+
     open_project $env(VIVADO_PROJECT)
     open_run impl_1
     write_bitstream -force $env(VIVADO_BIT_STREAM)
-    write_cfgmem  -format bin -size $env(VIVADO_BIN_STREAM_SIZE) -interface $env(FLASH_SPI_INTERFACE) -loadbit "up 0x00000000 $env(VIVADO_BIT_STREAM)" -checksum -force -file $env(VIVADO_BIN_STREAM)
+    write_cfgmem  -format bin -size $env(VIVADO_BIN_STREAM_SIZE) -interface ${SPI_INTERFACE} -loadbit "up 0x00000000 $env(VIVADO_BIT_STREAM)" -checksum -force -file $env(VIVADO_BIN_STREAM)
     close_project
 }
 
 
 # program fpga
-proc load_fpga { args_list } {
+proc upload_fpga_vivado { args_list } {
     global env
     open_hw_manager
     connect_hw_server -allow_non_jtag
@@ -215,7 +270,7 @@ proc load_fpga { args_list } {
     refresh_hw_device -update_hw_probes false [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]
     set_property PROBES.FILE {} [get_hw_devices $env(FPGA_DEVICE)]
     set_property FULL_PROBES.FILE {} [get_hw_devices $env(FPGA_DEVICE)]
-    set_property PROGRAM.FILE $env(VIVADO_BIT_STREAM) [get_hw_devices $env(FPGA_DEVICE)]
+    set_property PROGRAM.FILE $env(PROGRAM_BIT_STREAM) [get_hw_devices $env(FPGA_DEVICE)]
     program_hw_devices [get_hw_devices $env(FPGA_DEVICE)]
     refresh_hw_device [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]
     close_hw_target
@@ -225,7 +280,7 @@ proc load_fpga { args_list } {
 
 
 # program config flash
-proc program_flash { args_list } {
+proc upload_config_flash_vivado { args_list } {
     global env
 
     # Check if specific jtag targets were applied
@@ -279,6 +334,34 @@ proc program_flash { args_list } {
     }
 }
 
+
+# Program AES key to FPGA
+proc program_aes_key_vivado { args_list } {
+    global env
+    open_hw_manager
+    connect_hw_server -allow_non_jtag
+    open_hw_target
+    set_property PROGRAM.FILE $env(PROGRAM_BIT_STREAM) [get_hw_devices xc7a50t_0]
+    current_hw_device [get_hw_devices $env(FPGA_DEVICE)]
+    refresh_hw_device -update_hw_probes false [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]
+    set_property ENCRYPTION.FILE $env(AES_KEY_FILE) [get_property PROGRAM.HW_BITSTREAM [lindex [get_hw_devices] 0]]
+    program_hw_devices -key {bbr} [lindex [get_hw_devices] 0]
+    refresh_hw_device [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]
+
+    # program EFUSE_CNTL:
+        # [5] W_EN_B_Cntl=0
+        # [4] R_EN_B_User=0
+        # [3] R_EN_B_Key=1 - AES key readout disabled
+        # [2] W_EN_B_Key_User=1 - AES key & USE_USER write disabled
+        # [1] AES_Exclusive=0
+        # [0] CFG_AES_Only=0 - program using non-cryped FPGA firmware is not forbidden
+
+    # program_hw_devices -control_efuse {0C} [lindex [get_hw_devices] 0]
+
+    refresh_hw_device [lindex [get_hw_devices $env(FPGA_DEVICE)] 0]
+}
+
+
 # main
 # extarct name of task to execute
 if {$argc > 0} {
@@ -290,7 +373,7 @@ if {$argc > 0} {
         puts "INFO | Vivado task to execute: <$task>."
     }
 } else {
-    puts "ERROR | No tclargs with Vivado task specified!"
+    puts "ERROR | No tclargs with Vivado task specified !"
     exit 1
 }
 

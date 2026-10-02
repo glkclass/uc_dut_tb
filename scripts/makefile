@@ -1,12 +1,12 @@
 .ONESHELL:
 SHELL=/bin/bash
 
--include env
+-include config.env
 export
 
--include user_env
-
+-include user.env
 export
+
 
 # generate backup folder unic name
 DAY_HASH := ${shell date +%Y_%m_%d}
@@ -20,13 +20,13 @@ LOG  := ${PWD_PATH}/${LOG}
 
 # rules
 
-# debug: clean_log impl generate_bitstream copy_bin_file
-# debug: clean_log mc_create_release_project mc_copy_elf_file
-debug: program_n_flash
-	$(ECHO_HEADER)
-	$(SETUP_TOOLS)
-# 	source vivado_cli.sh -t $@
-	$(ECHO_FOOTER)
+debug: clean_log program_aes_key_vivado
+# 	clean_log upload_fpga_vivado
+# 	clean_log program_aes_key_vivado
+# 	clean_log generate_aes_bitstream copy_bin_file
+# 	source flash_spi_interface_env
+# 	@cd ${MC_ROOT_PATH}/scripts
+# 	@make debug
 
 
 clean_log:
@@ -45,23 +45,26 @@ clean:
 	git clean -qfxd
 	@rsync -a --ignore-missing-args ${BACKUP_DIR}/.zed .
 	cd scripts
-	@rsync -a --ignore-missing-args ${BACKUP_DIR}/scripts/user_env .  										#  restore user env variables override
-	@rsync -a --ignore-missing-args ${BACKUP_DIR}/mc/scripts/user_env ${MC_ROOT_PATH}/scripts/user_env  	#  restore mc user env variables override
+	#  restore user.env variables override
+	@rsync -a --ignore-missing-args ${BACKUP_DIR}/scripts/user.env .
+	#  restore mc user.env variables override
+	@rsync -a --ignore-missing-args ${BACKUP_DIR}/mc/scripts/user.env ${MC_ROOT_PATH}/scripts/user.env
 	$(ECHO_FOOTER)
 
 # rtl/mc complex rules
-build_mc_load_elf: clean_log mc_build_app mc_load_elf
-build_mc_gen_hw_bin: clean_log mc_build_app mc_copy_elf_file generate_bitstream copy_bin_file
-build_mc_gen_hw_bin_load_fpga: clean_log build_mc_gen_hw_bin load_fpga
-build_mc_gen_hw_bin_program_flash: clean_log build_mc_gen_hw_bin program_flash
+upload_fpga: upload_fpga_ofp_loader
+upload_config_flash: upload_config_flash_ofp_loader
 
-create_mc_gen_hw_bin: clean_log mc_create_release_project mc_copy_elf_file generate_bitstream copy_bin_file
+build_mc_upload_elf: clean_log mc_build_app mc_upload_elf
+build_mc_gen_hw_bin: clean_log mc_build_app mc_copy_elf_file generate_bitstream copy_bin_file
+build_mc_gen_hw_bin_upload_fpga: clean_log build_mc_gen_hw_bin upload_fpga
+build_mc_gen_hw_bin_upload_config_flash: clean_log build_mc_gen_hw_bin upload_config_flash
+
+create_mc_rls_project_gen_hw_bin: clean_log mc_create_release_project mc_copy_elf_file generate_bitstream copy_bin_file
+create_mc_dbg_project_gen_hw_bin: clean_log mc_create_debug_project mc_copy_elf_file generate_bitstream copy_bin_file
 
 build_release_soc: clean_log synth generate_platform mc_create_release_project mc_copy_elf_file impl generate_bitstream copy_bin_file
 build_debug_soc: clean_log synth generate_platform mc_create_debug_project mc_copy_elf_file impl generate_bitstream copy_bin_file
-
-create_build_rls_soc: clean_log create_vivado_project build_release_soc
-create_build_dbg_soc: clean_log create_vivado_project build_debug_soc
 
 
 # dut_tb rules
@@ -92,12 +95,14 @@ dtb_debug:dtb_run dtb_view
 
 # mc rules
 mc_create_debug_project:
+	@source flash_spi_interface.env
 	@export APP_BUILD_CONFIG=DEBUG
 	@cd ${MC_ROOT_PATH}/scripts
 	@make create_project
 	@if [ $$? -ne 0 ]; then echo "ERROR | ..Failed. Terminated due to error(s). See log for details: ${LOG}, 1."; exit 1; fi
 
 mc_create_release_project:
+	@source flash_spi_interface.env
 	@export APP_BUILD_CONFIG=RELEASE
 	@cd ${MC_ROOT_PATH}/scripts
 	@make create_project
@@ -121,9 +126,9 @@ mc_copy_elf_file:
 	@make copy_elf_file
 	@if [ $$? -ne 0 ]; then echo "ERROR | ..Failed. Terminated due to error(s). See log for details: ${LOG}, 1."; exit 1; fi
 
-mc_load_elf:
+mc_upload_elf:
 	@cd ${MC_ROOT_PATH}/scripts
-	@make load_elf
+	@make upload_elf
 	@if [ $$? -ne 0 ]; then echo "ERROR | ..Failed. Terminated due to error(s). See log for details: ${LOG}, 1."; exit 1; fi
 
 mc_clean:
@@ -176,29 +181,41 @@ generate_platform:
 generate_bitstream:
 	$(ECHO_TOOLS_HEADER)
 	$(SETUP_TOOLS)
+	@source flash_spi_interface.env
+	source vivado_cli.sh -t $@
+	$(ECHO_FOOTER)
+
+generate_aes_bitstream:
+	$(ECHO_TOOLS_HEADER)
+	$(SETUP_TOOLS)
+	@source flash_spi_interface.env
 	source vivado_cli.sh -t $@
 	$(ECHO_FOOTER)
 
 copy_bin_file:
 	$(ECHO_HEADER)
-	$(SETUP_TOOLS)
-	echo "INFO | Copy ${VIVADO_BIN_STREAM} to ${ART_BIN_FOLDER}"
-	cp -r ${VIVADO_BIN_STREAM} ${ART_BIN_FOLDER}
+	source vivado_cli.sh -t $@
 	$(ECHO_FOOTER)
 
-load_fpga:
+upload_fpga_vivado:
 	$(ECHO_HEADER)
 	$(SETUP_TOOLS)
 	source vivado_cli.sh -t $@
 	$(ECHO_FOOTER)
 
-program_flash:
+upload_config_flash_vivado:
 	$(ECHO_HEADER)
 	$(SETUP_TOOLS)
 	source vivado_cli.sh -t $@
 	$(ECHO_FOOTER)
 
-program_n_flash: clean_log
+upload_n_config_flash_vivado: clean_log
+	$(ECHO_HEADER)
+	$(SETUP_TOOLS)
+	source vivado_cli.sh -t $@
+	$(ECHO_FOOTER)
+
+program_aes_key_vivado:
 	$(ECHO_HEADER)
 	$(SETUP_TOOLS)
 	source vivado_cli.sh -t $@
@@ -210,16 +227,34 @@ detect_jtag_targets: clean_log
 	source vivado_cli.sh -t $@
 	$(ECHO_FOOTER)
 
-hw_debug: clean_log
+upload_fpga_ofp_loader:
 	$(ECHO_HEADER)
-	$(SETUP_TOOLS)
-	source vivado_cli.sh -t debug
+	source vivado_cli.sh -t $@
+	$(ECHO_FOOTER)
+
+upload_config_flash_ofp_loader:
+	$(ECHO_HEADER)
+	source vivado_cli.sh -t $@
+	$(ECHO_FOOTER)
+
+upload_settings_flash_ofp_loader:
+	$(ECHO_HEADER)
+	source vivado_cli.sh -t $@
+	$(ECHO_FOOTER)
+
+upload_config_settings_flash_ofp_loader:
+	$(ECHO_HEADER)
+	source vivado_cli.sh -t $@
+	$(ECHO_FOOTER)
+
+combine_config_settings_bin_files:
+	$(ECHO_HEADER)
+	source vivado_cli.sh -t $@
 	$(ECHO_FOOTER)
 
 # py rules
-program_uart_flash:
+upload_config_flash_uart:
 	$(ECHO_HEADER)
-	$(SETUP_TOOLS)
 	@cd ${AM_SERIAL_SCRIPTS_ROOT_PATH}
 	python3 am_serial_fc.py --flash_type Config --file ${abspath ${PROGRAM_BIN_STREAM}} --port ${AM_SERIAL_PORT}
 	$(ECHO_FOOTER)

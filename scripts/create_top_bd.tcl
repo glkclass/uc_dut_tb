@@ -46,7 +46,7 @@ if { [string first $scripts_vivado_version $current_vivado_version] == -1 } {
 
 # The design that will be created by this Tcl script contains the following 
 # module references:
-# usb_uart, mipi_csi_axis_streamer, sens_streamer, ddr3_sm_core_frontend, ddr3_sm_core_request_handler, ips_demux, pb_master_clk_mux, dbg_probe_mux_wrapper, mipi_csi_axis_streamer, ffc_ddr3_streamer, ddr3_rw_proxy
+# usb_uart, sens_streamer, ips_demux, pb_master_clk_mux, dbg_probe_mux_wrapper, bank_store, image_ddr3_streamer, image_processor, x8_spi_frontend, ddr3_rw_proxy, ddr3_sm_core_request_handler, ddr3_sm_core_frontend, axis_streamer, axis_streamer
 
 # Please add the sources of those modules before sourcing this Tcl script.
 
@@ -141,12 +141,10 @@ xilinx.com:ip:util_ds_buf:2.2\
 xilinx.com:inline_hdl:ilconstant:1.0\
 xilinx.com:inline_hdl:ilvector_logic:1.0\
 xilinx.com:ip:axi_crossbar:2.1\
-xilinx.com:ip:axi_quad_spi:3.2\
-xilinx.com:ip:axi_uart16550:2.0\
-xilinx.com:ip:axi_iic:2.1\
 xilinx.com:ip:xadc_wiz:3.3\
 xilinx.com:inline_hdl:ilconcat:1.0\
 xilinx.com:ip:mipi_csi2_tx_subsystem:2.2\
+xilinx.com:ip:axi_timer:2.0\
 xilinx.com:ip:axi_gpio:2.0\
 xilinx.com:ip:mdm:3.2\
 xilinx.com:ip:microblaze:11.0\
@@ -154,6 +152,9 @@ xilinx.com:ip:axi_intc:4.1\
 xilinx.com:ip:proc_sys_reset:5.0\
 xilinx.com:ip:axi_bram_ctrl:4.1\
 xilinx.com:ip:blk_mem_gen:8.4\
+xilinx.com:ip:axi_quad_spi:3.2\
+xilinx.com:ip:axi_uart16550:2.0\
+xilinx.com:ip:axi_iic:2.1\
 xilinx.com:ip:lmb_v10:3.0\
 xilinx.com:ip:lmb_bram_if_cntlr:4.0\
 "
@@ -182,16 +183,19 @@ set bCheckModules 1
 if { $bCheckModules == 1 } {
    set list_check_mods "\ 
 usb_uart\
-mipi_csi_axis_streamer\
 sens_streamer\
-ddr3_sm_core_frontend\
-ddr3_sm_core_request_handler\
 ips_demux\
 pb_master_clk_mux\
 dbg_probe_mux_wrapper\
-mipi_csi_axis_streamer\
-ffc_ddr3_streamer\
+bank_store\
+image_ddr3_streamer\
+image_processor\
+x8_spi_frontend\
 ddr3_rw_proxy\
+ddr3_sm_core_request_handler\
+ddr3_sm_core_frontend\
+axis_streamer\
+axis_streamer\
 "
 
    set list_mods_missing ""
@@ -303,6 +307,348 @@ proc create_hier_cell_mblaze_local_memory { parentCell nameHier } {
   [get_bd_pins i_lmb/SYS_Rst] \
   [get_bd_pins i_lmb_bram_if_cntlr/LMB_Rst] \
   [get_bd_pins d_lmb_bram_if_cntlr/LMB_Rst]
+
+  # Restore current instance
+  current_bd_instance $oldCurInst
+}
+
+# Hierarchical cell: axis_streamer
+proc create_hier_cell_axis_streamer { parentCell nameHier } {
+
+  variable script_folder
+
+  if { $parentCell eq "" || $nameHier eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2092 -severity "ERROR" "create_hier_cell_axis_streamer() - Empty argument(s)!"}
+     return
+  }
+
+  # Get object for parentCell
+  set parentObj [get_bd_cells $parentCell]
+  if { $parentObj == "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2090 -severity "ERROR" "Unable to find parent cell <$parentCell>!"}
+     return
+  }
+
+  # Make sure parentObj is hier blk
+  set parentType [get_property TYPE $parentObj]
+  if { $parentType ne "hier" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2091 -severity "ERROR" "Parent <$parentObj> has TYPE = <$parentType>. Expected to be <hier>."}
+     return
+  }
+
+  # Save current instance; Restore later
+  set oldCurInst [current_bd_instance .]
+
+  # Set parent object as current
+  current_bd_instance $parentObj
+
+  # Create cell and set as current instance
+  set hier_obj [create_bd_cell -type hier $nameHier]
+  current_bd_instance $hier_obj
+
+  # Create interface pins
+  create_bd_intf_pin -mode Slave -vlnv Oko:user:sensor_image_rtl:1.0 image
+
+  create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:axis_rtl:1.0 axis
+
+  create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:axis_rtl:1.0 uvc_axis
+
+  create_bd_intf_pin -mode Slave -vlnv Oko:user:sensor_image_rtl:1.0 image1
+
+
+  # Create pins
+  create_bd_pin -dir I -type rst sys_rst_n
+  create_bd_pin -dir I -type clk sys_clk
+  create_bd_pin -dir I mipi_csi_enable
+  create_bd_pin -dir I -from 2 -to 0 mipi_csi_data_format
+  create_bd_pin -dir I -from 2 -to 0 uvc_data_format1
+  create_bd_pin -dir I uvc_enable
+
+  # Create instance: mipi_csi_axis_streamer, and set properties
+  set block_name axis_streamer
+  set block_cell_name mipi_csi_axis_streamer
+  if { [catch {set mipi_csi_axis_streamer [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $mipi_csi_axis_streamer eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
+  set_property -dict [ list \
+   CONFIG.ASSOCIATED_BUSIF {axis} \
+ ] [get_bd_pins /image_processing_pipeline/axis_streamer/mipi_csi_axis_streamer/i_sys_clk]
+
+  # Create instance: uvc_axis_streamer, and set properties
+  set block_name axis_streamer
+  set block_cell_name uvc_axis_streamer
+  if { [catch {set uvc_axis_streamer [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $uvc_axis_streamer eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
+  set_property -dict [ list \
+   CONFIG.ASSOCIATED_BUSIF {axis} \
+ ] [get_bd_pins /image_processing_pipeline/axis_streamer/uvc_axis_streamer/i_sys_clk]
+
+  # Create interface connections
+  connect_bd_intf_net -intf_net Conn1 [get_bd_intf_pins uvc_axis_streamer/axis] [get_bd_intf_pins uvc_axis]
+  connect_bd_intf_net -intf_net Conn2 [get_bd_intf_pins uvc_axis_streamer/image] [get_bd_intf_pins image1]
+  connect_bd_intf_net -intf_net bank_store_mipi_csi_m [get_bd_intf_pins image] [get_bd_intf_pins mipi_csi_axis_streamer/image]
+  connect_bd_intf_net -intf_net mipi_csi_axis_streamer_mipi_csi_axis [get_bd_intf_pins axis] [get_bd_intf_pins mipi_csi_axis_streamer/axis]
+
+  # Create port connections
+  connect_bd_net -net clk_store_sys_clk_out2  [get_bd_pins sys_clk] \
+  [get_bd_pins mipi_csi_axis_streamer/i_sys_clk] \
+  [get_bd_pins uvc_axis_streamer/i_sys_clk]
+  connect_bd_net -net core_sys_peripheral_aresetn  [get_bd_pins sys_rst_n] \
+  [get_bd_pins mipi_csi_axis_streamer/i_rst_n] \
+  [get_bd_pins uvc_axis_streamer/i_rst_n]
+  connect_bd_net -net i_data_format1_1  [get_bd_pins uvc_data_format1] \
+  [get_bd_pins uvc_axis_streamer/i_data_format]
+  connect_bd_net -net i_enable1_1  [get_bd_pins uvc_enable] \
+  [get_bd_pins uvc_axis_streamer/i_enable]
+  connect_bd_net -net ips_demux_o_ips_mipi_csi_data_format  [get_bd_pins mipi_csi_data_format] \
+  [get_bd_pins mipi_csi_axis_streamer/i_data_format]
+  connect_bd_net -net ips_demux_o_ips_mipi_csi_stream_en  [get_bd_pins mipi_csi_enable] \
+  [get_bd_pins mipi_csi_axis_streamer/i_enable]
+
+  # Restore current instance
+  current_bd_instance $oldCurInst
+}
+
+# Hierarchical cell: ddr3_sm_core
+proc create_hier_cell_ddr3_sm_core { parentCell nameHier } {
+
+  variable script_folder
+
+  if { $parentCell eq "" || $nameHier eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2092 -severity "ERROR" "create_hier_cell_ddr3_sm_core() - Empty argument(s)!"}
+     return
+  }
+
+  # Get object for parentCell
+  set parentObj [get_bd_cells $parentCell]
+  if { $parentObj == "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2090 -severity "ERROR" "Unable to find parent cell <$parentCell>!"}
+     return
+  }
+
+  # Make sure parentObj is hier blk
+  set parentType [get_property TYPE $parentObj]
+  if { $parentType ne "hier" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2091 -severity "ERROR" "Parent <$parentObj> has TYPE = <$parentType>. Expected to be <hier>."}
+     return
+  }
+
+  # Save current instance; Restore later
+  set oldCurInst [current_bd_instance .]
+
+  # Set parent object as current
+  current_bd_instance $parentObj
+
+  # Create cell and set as current instance
+  set hier_obj [create_bd_cell -type hier $nameHier]
+  current_bd_instance $hier_obj
+
+  # Create interface pins
+  create_bd_intf_pin -mode Slave -vlnv Oko:user:dsm_rw_rtl:1.0 rd_port_0
+
+  create_bd_intf_pin -mode Slave -vlnv Oko:user:dsm_rw_rtl:1.0 rd_port_1
+
+  create_bd_intf_pin -mode Slave -vlnv Oko:user:dsm_rw_rtl:1.0 rd_port_2
+
+  create_bd_intf_pin -mode Slave -vlnv Oko:user:dsm_rw_rtl:1.0 rw_port_0
+
+  create_bd_intf_pin -mode Slave -vlnv Oko:user:dsm_rw_rtl:1.0 wr_port_0
+
+  create_bd_intf_pin -mode Master -vlnv Oko:user:ddr3_rtl:1.0 ddr3
+
+
+  # Create pins
+  create_bd_pin -dir I -type rst sys_rst_n
+  create_bd_pin -dir I -type clk sys_clk
+  create_bd_pin -dir I -type clk sys_135_clk
+  create_bd_pin -dir I -type clk ddr_270_clk
+  create_bd_pin -dir I -type clk ddr_clk
+  create_bd_pin -dir I -type clk ref_clk
+  create_bd_pin -dir I i_power_down
+
+  # Create instance: ddr3_sm_core_request_handler, and set properties
+  set block_name ddr3_sm_core_request_handler
+  set block_cell_name ddr3_sm_core_request_handler
+  if { [catch {set ddr3_sm_core_request_handler [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $ddr3_sm_core_request_handler eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
+  set_property -dict [ list \
+   CONFIG.ASSOCIATED_BUSIF {sm_core_rd_port_bram:sm_core_wr_port_bram:ddr3_proxy_bram_mntr:core_sys_rw_port:rd_coeff_req:rd_coeff_bram:core_sys_rw_port_bram:sm_core_rd_port:sm_core_wr_port} \
+ ] [get_bd_pins /image_processing_pipeline/ddr3_sm_core/ddr3_sm_core_request_handler/i_sys_clk]
+
+  # Create instance: ddr3_sm_core_frontend, and set properties
+  set block_name ddr3_sm_core_frontend
+  set block_cell_name ddr3_sm_core_frontend
+  if { [catch {set ddr3_sm_core_frontend [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $ddr3_sm_core_frontend eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
+  set_property -dict [ list \
+   CONFIG.ASSOCIATED_BUSIF {rd_port:wr_port:rd_port_bram:wr_port_bram} \
+ ] [get_bd_pins /image_processing_pipeline/ddr3_sm_core/ddr3_sm_core_frontend/i_core_clk]
+
+  # Create interface connections
+  connect_bd_intf_net -intf_net Conn1 [get_bd_intf_pins ddr3_sm_core_frontend/ddr3] [get_bd_intf_pins ddr3]
+  connect_bd_intf_net -intf_net Conn2 [get_bd_intf_pins rw_port_0] [get_bd_intf_pins ddr3_sm_core_request_handler/rw_port_0]
+  connect_bd_intf_net -intf_net bank_store_rd_coeff_ddr3_m [get_bd_intf_pins rd_port_0] [get_bd_intf_pins ddr3_sm_core_request_handler/rd_port_0]
+  connect_bd_intf_net -intf_net bank_store_rd_dpm_ddr3_m [get_bd_intf_pins rd_port_1] [get_bd_intf_pins ddr3_sm_core_request_handler/rd_port_1]
+  connect_bd_intf_net -intf_net bank_store_rd_image_ddr3_m [get_bd_intf_pins rd_port_2] [get_bd_intf_pins ddr3_sm_core_request_handler/rd_port_2]
+  connect_bd_intf_net -intf_net ddr3_sm_core_request_handler_sm_core_rw_port [get_bd_intf_pins ddr3_sm_core_request_handler/sm_core_rw_port] [get_bd_intf_pins ddr3_sm_core_frontend/rw_port]
+  connect_bd_intf_net -intf_net image_ddr3_streamer_wr_img_ddr3_m [get_bd_intf_pins wr_port_0] [get_bd_intf_pins ddr3_sm_core_request_handler/wr_port_0]
+
+  # Create port connections
+  connect_bd_net -net clk_store_sys_clk_out2  [get_bd_pins sys_clk] \
+  [get_bd_pins ddr3_sm_core_frontend/i_core_clk] \
+  [get_bd_pins ddr3_sm_core_request_handler/i_sys_clk]
+  connect_bd_net -net core_sys_peripheral_aresetn  [get_bd_pins sys_rst_n] \
+  [get_bd_pins ddr3_sm_core_frontend/i_rst_n] \
+  [get_bd_pins ddr3_sm_core_request_handler/i_rst_n]
+  connect_bd_net -net ddr_270_clk_1  [get_bd_pins ddr_270_clk] \
+  [get_bd_pins ddr3_sm_core_frontend/i_ddr_270_clk]
+  connect_bd_net -net ddr_clk_1  [get_bd_pins ddr_clk] \
+  [get_bd_pins ddr3_sm_core_frontend/i_ddr_clk]
+  connect_bd_net -net i_power_down_1  [get_bd_pins i_power_down] \
+  [get_bd_pins ddr3_sm_core_frontend/i_power_down]
+  connect_bd_net -net ref_clk_1  [get_bd_pins ref_clk] \
+  [get_bd_pins ddr3_sm_core_frontend/i_ref_clk]
+  connect_bd_net -net sys_135_clk_1  [get_bd_pins sys_135_clk] \
+  [get_bd_pins ddr3_sm_core_frontend/i_core_135_clk]
+
+  # Restore current instance
+  current_bd_instance $oldCurInst
+}
+
+# Hierarchical cell: low_speed_ports
+proc create_hier_cell_low_speed_ports { parentCell nameHier } {
+
+  variable script_folder
+
+  if { $parentCell eq "" || $nameHier eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2092 -severity "ERROR" "create_hier_cell_low_speed_ports() - Empty argument(s)!"}
+     return
+  }
+
+  # Get object for parentCell
+  set parentObj [get_bd_cells $parentCell]
+  if { $parentObj == "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2090 -severity "ERROR" "Unable to find parent cell <$parentCell>!"}
+     return
+  }
+
+  # Make sure parentObj is hier blk
+  set parentType [get_property TYPE $parentObj]
+  if { $parentType ne "hier" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2091 -severity "ERROR" "Parent <$parentObj> has TYPE = <$parentType>. Expected to be <hier>."}
+     return
+  }
+
+  # Save current instance; Restore later
+  set oldCurInst [current_bd_instance .]
+
+  # Set parent object as current
+  current_bd_instance $parentObj
+
+  # Create cell and set as current instance
+  set hier_obj [create_bd_cell -type hier $nameHier]
+  current_bd_instance $hier_obj
+
+  # Create interface pins
+  create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:spi_rtl:1.0 config_flash_spi
+
+  create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:startup_rtl:1.0 STARTUP_IO_S
+
+  create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 config_flash_AXI_LITE
+
+  create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 uart_S_AXI
+
+  create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:uart_rtl:1.0 uart
+
+  create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 iic_S_AXI
+
+  create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:iic_rtl:1.0 mipi_csi_iic
+
+  create_bd_intf_pin -mode Slave -vlnv xilinx.com:interface:aximm_rtl:1.0 proxy_board_spi_AXI_LITE
+
+  create_bd_intf_pin -mode Master -vlnv xilinx.com:interface:spi_rtl:1.0 proxy_board_spi
+
+
+  # Create pins
+  create_bd_pin -dir I -type clk sys_clk
+  create_bd_pin -dir I -type rst s_axi_aresetn
+  create_bd_pin -dir O -type intr iic2intc_irpt
+
+  # Create instance: config_flash_spi, and set properties
+  set config_flash_spi [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_quad_spi:3.2 config_flash_spi ]
+  set_property -dict [list \
+    CONFIG.C_FIFO_DEPTH {256} \
+    CONFIG.C_SHARED_STARTUP {1} \
+    CONFIG.C_SPI_MEMORY {2} \
+    CONFIG.C_SPI_MODE {2} \
+  ] $config_flash_spi
+
+
+  # Create instance: uart, and set properties
+  set uart [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_uart16550:2.0 uart ]
+
+  # Create instance: mipi_csi_iic, and set properties
+  set mipi_csi_iic [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_iic:2.1 mipi_csi_iic ]
+
+  # Create instance: proxy_board_spi, and set properties
+  set proxy_board_spi [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_quad_spi:3.2 proxy_board_spi ]
+  set_property -dict [list \
+    CONFIG.C_NUM_TRANSFER_BITS {16} \
+    CONFIG.C_USE_STARTUP {0} \
+    CONFIG.FIFO_INCLUDED {0} \
+    CONFIG.Multiples16 {3} \
+  ] $proxy_board_spi
+
+
+  # Create interface connections
+  connect_bd_intf_net -intf_net Conn1 [get_bd_intf_pins STARTUP_IO_S] [get_bd_intf_pins config_flash_spi/STARTUP_IO_S]
+  connect_bd_intf_net -intf_net Conn2 [get_bd_intf_pins uart/S_AXI] [get_bd_intf_pins uart_S_AXI]
+  connect_bd_intf_net -intf_net Conn3 [get_bd_intf_pins uart/UART] [get_bd_intf_pins uart]
+  connect_bd_intf_net -intf_net Conn4 [get_bd_intf_pins mipi_csi_iic/S_AXI] [get_bd_intf_pins iic_S_AXI]
+  connect_bd_intf_net -intf_net Conn5 [get_bd_intf_pins mipi_csi_iic/IIC] [get_bd_intf_pins mipi_csi_iic]
+  connect_bd_intf_net -intf_net Conn6 [get_bd_intf_pins proxy_board_spi/AXI_LITE] [get_bd_intf_pins proxy_board_spi_AXI_LITE]
+  connect_bd_intf_net -intf_net Conn7 [get_bd_intf_pins proxy_board_spi/SPI_0] [get_bd_intf_pins proxy_board_spi]
+  connect_bd_intf_net -intf_net axi_crossbar_0_M04_AXI [get_bd_intf_pins config_flash_AXI_LITE] [get_bd_intf_pins config_flash_spi/AXI_LITE]
+  connect_bd_intf_net -intf_net perith_spi_rtl_0 [get_bd_intf_pins config_flash_spi] [get_bd_intf_pins config_flash_spi/SPI_0]
+
+  # Create port connections
+  connect_bd_net -net SOC_reset_interconnect_aresetn  [get_bd_pins s_axi_aresetn] \
+  [get_bd_pins config_flash_spi/s_axi_aresetn] \
+  [get_bd_pins uart/s_axi_aresetn] \
+  [get_bd_pins mipi_csi_iic/s_axi_aresetn] \
+  [get_bd_pins proxy_board_spi/s_axi_aresetn]
+  connect_bd_net -net aclk_0_1  [get_bd_pins sys_clk] \
+  [get_bd_pins config_flash_spi/s_axi_aclk] \
+  [get_bd_pins config_flash_spi/ext_spi_clk] \
+  [get_bd_pins uart/s_axi_aclk] \
+  [get_bd_pins mipi_csi_iic/s_axi_aclk] \
+  [get_bd_pins proxy_board_spi/s_axi_aclk] \
+  [get_bd_pins proxy_board_spi/ext_spi_clk]
+  connect_bd_net -net mipi_csi_iic_iic2intc_irpt  [get_bd_pins mipi_csi_iic/iic2intc_irpt] \
+  [get_bd_pins iic2intc_irpt]
 
   # Restore current instance
   current_bd_instance $oldCurInst
@@ -626,13 +972,17 @@ proc create_hier_cell_gpio { parentCell nameHier } {
   create_bd_pin -dir O -from 31 -to 0 dbg_probe_0_mc_out
   create_bd_pin -dir O -from 31 -to 0 dbg_probe_1_mc_out
   create_bd_pin -dir O -from 31 -to 0 ips
+  create_bd_pin -dir O -from 16 -to 0 coeff_table_idx_ratio
 
   # Create instance: coeff_table_base_addr, and set properties
   set coeff_table_base_addr [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_gpio:2.0 coeff_table_base_addr ]
   set_property -dict [list \
     CONFIG.C_ALL_INPUTS {0} \
     CONFIG.C_ALL_OUTPUTS {1} \
+    CONFIG.C_ALL_OUTPUTS_2 {1} \
+    CONFIG.C_GPIO2_WIDTH {17} \
     CONFIG.C_GPIO_WIDTH {18} \
+    CONFIG.C_IS_DUAL {1} \
   ] $coeff_table_base_addr
 
 
@@ -695,6 +1045,8 @@ proc create_hier_cell_gpio { parentCell nameHier } {
   # Create port connections
   connect_bd_net -net bba_1  [get_bd_pins bba] \
   [get_bd_pins bba_ifn/gpio_io_i]
+  connect_bd_net -net coeff_table_base_addr_gpio2_io_o  [get_bd_pins coeff_table_base_addr/gpio2_io_o] \
+  [get_bd_pins coeff_table_idx_ratio]
   connect_bd_net -net coeff_table_base_addr_gpio_io_o  [get_bd_pins coeff_table_base_addr/gpio_io_o] \
   [get_bd_pins coeff_table_ddr3_base_addr]
   connect_bd_net -net dbg_probe_mc_out_gpio2_io_o  [get_bd_pins dbg_probe_mc_out/gpio2_io_o] \
@@ -798,21 +1150,7 @@ proc create_hier_cell_image_processing_pipeline { parentCell nameHier } {
   create_bd_pin -dir O -from 31 -to 0 dbg_probe_mc_in_2
   create_bd_pin -dir I -from 0 -to 0 i_superviser
   create_bd_pin -dir I -from 31 -to 0 ips
-
-  # Create instance: mipi_csi_axis_streamer, and set properties
-  set block_name mipi_csi_axis_streamer
-  set block_cell_name mipi_csi_axis_streamer
-  if { [catch {set mipi_csi_axis_streamer [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
-     return 1
-   } elseif { $mipi_csi_axis_streamer eq "" } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
-     return 1
-   }
-  
-  set_property -dict [ list \
-   CONFIG.ASSOCIATED_BUSIF {user_sens_img:mipi_csi_axis} \
- ] [get_bd_pins /image_processing_pipeline/mipi_csi_axis_streamer/i_sys_clk]
+  create_bd_pin -dir I -from 16 -to 0 coeff_table_idx_ratio
 
   # Create instance: sens_streamer, and set properties
   set block_name sens_streamer
@@ -835,40 +1173,10 @@ proc create_hier_cell_image_processing_pipeline { parentCell nameHier } {
    CONFIG.ASSOCIATED_BUSIF {rd_coeff_req:user_sens_img} \
  ] [get_bd_pins /image_processing_pipeline/sens_streamer/i_sys_clk]
 
-  # Create instance: ddr3_sm_core_frontend, and set properties
-  set block_name ddr3_sm_core_frontend
-  set block_cell_name ddr3_sm_core_frontend
-  if { [catch {set ddr3_sm_core_frontend [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
-     return 1
-   } elseif { $ddr3_sm_core_frontend eq "" } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
-     return 1
-   }
-  
-  set_property -dict [ list \
-   CONFIG.ASSOCIATED_BUSIF {rd_port:wr_port:rd_port_bram:wr_port_bram} \
- ] [get_bd_pins /image_processing_pipeline/ddr3_sm_core_frontend/i_core_clk]
-
   # Create instance: ilconstant_0, and set properties
   set ilconstant_0 [ create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilconstant:1.0 ilconstant_0 ]
   set_property CONFIG.CONST_VAL {0} $ilconstant_0
 
-
-  # Create instance: ddr3_sm_core_request_handler, and set properties
-  set block_name ddr3_sm_core_request_handler
-  set block_cell_name ddr3_sm_core_request_handler
-  if { [catch {set ddr3_sm_core_request_handler [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
-     return 1
-   } elseif { $ddr3_sm_core_request_handler eq "" } {
-     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
-     return 1
-   }
-  
-  set_property -dict [ list \
-   CONFIG.ASSOCIATED_BUSIF {sm_core_rd_port_bram:sm_core_wr_port_bram:ddr3_proxy_bram_mntr:core_sys_rw_port:rd_coeff_req:rd_coeff_bram:core_sys_rw_port_bram:sm_core_rd_port:sm_core_wr_port} \
- ] [get_bd_pins /image_processing_pipeline/ddr3_sm_core_request_handler/i_sys_clk]
 
   # Create instance: ipst_mux, and set properties
   set ipst_mux [ create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilconcat:1.0 ipst_mux ]
@@ -908,90 +1216,119 @@ proc create_hier_cell_image_processing_pipeline { parentCell nameHier } {
      return 1
    }
   
-  # Create instance: uvc_axis_streamer, and set properties
-  set block_name mipi_csi_axis_streamer
-  set block_cell_name uvc_axis_streamer
-  if { [catch {set uvc_axis_streamer [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+  # Create instance: bank_store, and set properties
+  set block_name bank_store
+  set block_cell_name bank_store
+  if { [catch {set bank_store [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
-   } elseif { $uvc_axis_streamer eq "" } {
+   } elseif { $bank_store eq "" } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
   
-  set_property -dict [ list \
-   CONFIG.ASSOCIATED_BUSIF {user_sens_img:mipi_csi_axis} \
- ] [get_bd_pins /image_processing_pipeline/uvc_axis_streamer/i_sys_clk]
-
-  # Create instance: ffc_ddr3_streamer, and set properties
-  set block_name ffc_ddr3_streamer
-  set block_cell_name ffc_ddr3_streamer
-  if { [catch {set ffc_ddr3_streamer [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+  # Create instance: image_ddr3_streamer, and set properties
+  set block_name image_ddr3_streamer
+  set block_cell_name image_ddr3_streamer
+  if { [catch {set image_ddr3_streamer [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
-   } elseif { $ffc_ddr3_streamer eq "" } {
+   } elseif { $image_ddr3_streamer eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
+  # Create instance: image_processor, and set properties
+  set block_name image_processor
+  set block_cell_name image_processor
+  if { [catch {set image_processor [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $image_processor eq "" } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   }
+  
+  # Create instance: ddr3_sm_core
+  create_hier_cell_ddr3_sm_core $hier_obj ddr3_sm_core
+
+  # Create instance: axis_streamer
+  create_hier_cell_axis_streamer $hier_obj axis_streamer
+
+  # Create instance: x8_spi_frontend, and set properties
+  set block_name x8_spi_frontend
+  set block_cell_name x8_spi_frontend
+  if { [catch {set x8_spi_frontend [create_bd_cell -type module -reference $block_name $block_cell_name] } errmsg] } {
+     catch {common::send_gid_msg -ssname BD::TCL -id 2095 -severity "ERROR" "Unable to add referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
+     return 1
+   } elseif { $x8_spi_frontend eq "" } {
      catch {common::send_gid_msg -ssname BD::TCL -id 2096 -severity "ERROR" "Unable to referenced block <$block_name>. Please add the files for ${block_name}'s definition into the project."}
      return 1
    }
   
   # Create interface connections
-  connect_bd_intf_net -intf_net Conn1 [get_bd_intf_pins uvc_axis_streamer/mipi_csi_axis] [get_bd_intf_pins uvc_axis]
-  connect_bd_intf_net -intf_net Conn2 [get_bd_intf_pins ddr3_sm_core_request_handler/rw_port_0] [get_bd_intf_pins core_sys_rw_port]
-  connect_bd_intf_net -intf_net ddr3_frontend_ddr3_0 [get_bd_intf_pins ddr3] [get_bd_intf_pins ddr3_sm_core_frontend/ddr3]
-  connect_bd_intf_net -intf_net ddr3_sm_core_request_handler_sm_core_rw_port [get_bd_intf_pins ddr3_sm_core_request_handler/sm_core_rw_port] [get_bd_intf_pins ddr3_sm_core_frontend/rw_port]
-  connect_bd_intf_net -intf_net ffc_ddr3_streamer_0_wr_img_frame [get_bd_intf_pins ffc_ddr3_streamer/wr_img_frame] [get_bd_intf_pins ddr3_sm_core_request_handler/wr_port_0]
-  connect_bd_intf_net -intf_net image_processing_pipeline_mipi_csi_axis [get_bd_intf_pins mipi_csi_axis] [get_bd_intf_pins mipi_csi_axis_streamer/mipi_csi_axis]
+  connect_bd_intf_net -intf_net Conn2 [get_bd_intf_pins ddr3_sm_core/rw_port_0] [get_bd_intf_pins core_sys_rw_port]
+  connect_bd_intf_net -intf_net axis_streamer_uvc_axis [get_bd_intf_pins uvc_axis] [get_bd_intf_pins axis_streamer/uvc_axis]
+  connect_bd_intf_net -intf_net bank_store_image_m [get_bd_intf_pins bank_store/image_m] [get_bd_intf_pins image_ddr3_streamer/image]
+  connect_bd_intf_net -intf_net bank_store_mipi_csi_m [get_bd_intf_pins bank_store/mipi_csi_m] [get_bd_intf_pins axis_streamer/image]
+  connect_bd_intf_net -intf_net bank_store_rd_coeff_ddr3_m [get_bd_intf_pins bank_store/rd_coeff_ddr3_m] [get_bd_intf_pins ddr3_sm_core/rd_port_0]
+  connect_bd_intf_net -intf_net bank_store_rd_dpm_ddr3_m [get_bd_intf_pins bank_store/rd_dpm_ddr3_m] [get_bd_intf_pins ddr3_sm_core/rd_port_1]
+  connect_bd_intf_net -intf_net bank_store_rd_image_ddr3_m [get_bd_intf_pins bank_store/rd_image_ddr3_m] [get_bd_intf_pins ddr3_sm_core/rd_port_2]
+  connect_bd_intf_net -intf_net bank_store_uvc_m [get_bd_intf_pins bank_store/uvc_m] [get_bd_intf_pins axis_streamer/image1]
+  connect_bd_intf_net -intf_net ddr3_sm_core_ddr3 [get_bd_intf_pins ddr3] [get_bd_intf_pins ddr3_sm_core/ddr3]
+  connect_bd_intf_net -intf_net image_ddr3_streamer_wr_img_ddr3_m [get_bd_intf_pins image_ddr3_streamer/wr_image_ddr3] [get_bd_intf_pins ddr3_sm_core/wr_port_0]
+  connect_bd_intf_net -intf_net image_processor_rd_image_ddr3_m [get_bd_intf_pins image_processor/rd_image_ddr3] [get_bd_intf_pins bank_store/rd_image_ddr3_s]
+  connect_bd_intf_net -intf_net mipi_csi_axis_streamer_mipi_csi_axis [get_bd_intf_pins mipi_csi_axis] [get_bd_intf_pins axis_streamer/axis]
   connect_bd_intf_net -intf_net proxy_board_1 [get_bd_intf_pins proxy_board] [get_bd_intf_pins sens_streamer/user_sens]
-  connect_bd_intf_net -intf_net sens_streamer_ffc [get_bd_intf_pins sens_streamer/ffc] [get_bd_intf_pins ffc_ddr3_streamer/ffc]
-  connect_bd_intf_net -intf_net sens_streamer_mipi_csi [get_bd_intf_pins mipi_csi_axis_streamer/user_sensor_image] [get_bd_intf_pins sens_streamer/mipi_csi]
-  connect_bd_intf_net -intf_net sens_streamer_rd_coeff [get_bd_intf_pins sens_streamer/rd_coeff] [get_bd_intf_pins ddr3_sm_core_request_handler/rd_port_0]
-  connect_bd_intf_net -intf_net sens_streamer_rd_dp_mask [get_bd_intf_pins sens_streamer/rd_dp_mask] [get_bd_intf_pins ddr3_sm_core_request_handler/rd_port_1]
-  connect_bd_intf_net -intf_net sens_streamer_uvc [get_bd_intf_pins uvc_axis_streamer/user_sensor_image] [get_bd_intf_pins sens_streamer/uvc]
+  connect_bd_intf_net -intf_net sens_streamer_image_out_m [get_bd_intf_pins sens_streamer/image_out_m] [get_bd_intf_pins bank_store/image_s]
+  connect_bd_intf_net -intf_net sens_streamer_mipi_csi_out_m [get_bd_intf_pins sens_streamer/mipi_csi_out_m] [get_bd_intf_pins bank_store/mipi_csi_s]
+  connect_bd_intf_net -intf_net sens_streamer_rd_coeff_ddr3_m [get_bd_intf_pins sens_streamer/rd_coeff_ddr3_m] [get_bd_intf_pins bank_store/rd_coeff_ddr3_s]
+  connect_bd_intf_net -intf_net sens_streamer_rd_dpm_ddr3_m [get_bd_intf_pins sens_streamer/rd_dpm_ddr3_m] [get_bd_intf_pins bank_store/rd_dpm_ddr3_s]
+  connect_bd_intf_net -intf_net sens_streamer_uvc_out_m [get_bd_intf_pins sens_streamer/uvc_out_m] [get_bd_intf_pins bank_store/uvc_s]
 
   # Create port connections
   connect_bd_net -net In2_0_1  [get_bd_pins i_superviser] \
   [get_bd_pins ipst_mux/In2]
-  connect_bd_net -net clk_store_sys_clk_out1  [get_bd_pins ref_clk] \
-  [get_bd_pins ddr3_sm_core_frontend/i_ref_clk]
   connect_bd_net -net clk_store_sys_clk_out2  [get_bd_pins sys_clk] \
+  [get_bd_pins ddr3_sm_core/sys_clk] \
+  [get_bd_pins axis_streamer/sys_clk] \
+  [get_bd_pins bank_store/i_sys_clk] \
   [get_bd_pins dbg_probe_mux_wrapper/clk] \
-  [get_bd_pins ddr3_sm_core_frontend/i_core_clk] \
-  [get_bd_pins ddr3_sm_core_request_handler/i_sys_clk] \
-  [get_bd_pins ffc_ddr3_streamer/i_sys_clk] \
-  [get_bd_pins mipi_csi_axis_streamer/i_sys_clk] \
+  [get_bd_pins image_ddr3_streamer/i_sys_clk] \
+  [get_bd_pins image_processor/i_sys_clk] \
   [get_bd_pins sens_streamer/i_sys_clk] \
-  [get_bd_pins uvc_axis_streamer/i_sys_clk]
-  connect_bd_net -net clk_store_sys_clk_out3  [get_bd_pins sys_135_clk] \
-  [get_bd_pins ddr3_sm_core_frontend/i_core_135_clk]
-  connect_bd_net -net clk_store_sys_clk_out4  [get_bd_pins ddr_clk] \
-  [get_bd_pins ddr3_sm_core_frontend/i_ddr_clk]
-  connect_bd_net -net clk_store_sys_clk_out5  [get_bd_pins ddr_270_clk] \
-  [get_bd_pins ddr3_sm_core_frontend/i_ddr_270_clk]
+  [get_bd_pins x8_spi_frontend/i_sys_clk]
   connect_bd_net -net core_sys_peripheral_aresetn  [get_bd_pins sys_rst_n] \
-  [get_bd_pins ddr3_sm_core_frontend/i_rst_n] \
-  [get_bd_pins ddr3_sm_core_request_handler/i_rst_n] \
-  [get_bd_pins ffc_ddr3_streamer/i_sys_rst_n] \
-  [get_bd_pins mipi_csi_axis_streamer/i_rst_n] \
-  [get_bd_pins sens_streamer/i_sys_rst_n] \
-  [get_bd_pins uvc_axis_streamer/i_rst_n]
+  [get_bd_pins ddr3_sm_core/sys_rst_n] \
+  [get_bd_pins axis_streamer/sys_rst_n] \
+  [get_bd_pins image_ddr3_streamer/i_sys_rst_n] \
+  [get_bd_pins image_processor/i_sys_rst_n] \
+  [get_bd_pins sens_streamer/i_sys_rst_n]
   connect_bd_net -net dbg_probe_mux_wrapper_dbg_probe_mc_in_0  [get_bd_pins dbg_probe_mux_wrapper/dbg_probe_mc_in_0] \
   [get_bd_pins dbg_probe_mc_in_0]
   connect_bd_net -net dbg_probe_mux_wrapper_dbg_probe_mc_in_2  [get_bd_pins dbg_probe_mux_wrapper/dbg_probe_mc_in_2] \
   [get_bd_pins dbg_probe_mc_in_2]
-  connect_bd_net -net ffc_ddr3_streamer_o_ffc_processed  [get_bd_pins ffc_ddr3_streamer/o_ffc_processed] \
-  [get_bd_pins ipst_mux/In3]
+  connect_bd_net -net ddr_270_clk_1  [get_bd_pins ddr_270_clk] \
+  [get_bd_pins ddr3_sm_core/ddr_270_clk]
+  connect_bd_net -net ddr_clk_1  [get_bd_pins ddr_clk] \
+  [get_bd_pins ddr3_sm_core/ddr_clk]
+  connect_bd_net -net i_coeff_table_idx_1  [get_bd_pins coeff_table_idx_ratio] \
+  [get_bd_pins x8_spi_frontend/i_coeff_table_idx_ratio]
   connect_bd_net -net i_fr30_clk_0_1  [get_bd_pins fr30_clk] \
   [get_bd_pins pb_master_clk_mux/i_fr30_clk]
   connect_bd_net -net i_fr60_clk_0_1  [get_bd_pins fr60_clk] \
   [get_bd_pins pb_master_clk_mux/i_fr60_clk]
   connect_bd_net -net i_ips_0_1  [get_bd_pins ips] \
   [get_bd_pins ips_demux/i_ips]
-  connect_bd_net -net ilconstant_0_dout_1  [get_bd_pins ilconstant_0/dout] \
-  [get_bd_pins ddr3_sm_core_frontend/i_power_down]
+  connect_bd_net -net ilconstant_0_dout  [get_bd_pins ilconstant_0/dout] \
+  [get_bd_pins ddr3_sm_core/i_power_down]
   connect_bd_net -net ilconstant_1_dout  [get_bd_pins coeff_table_ddr3_base_addr] \
   [get_bd_pins sens_streamer/i_coeff_table_row_base_addr]
+  connect_bd_net -net image_ddr3_streamer_o_ffc_processed  [get_bd_pins image_ddr3_streamer/o_ffc_processed] \
+  [get_bd_pins ipst_mux/In3] \
+  [get_bd_pins sens_streamer/i_ffc_processed]
   connect_bd_net -net ips_demux_o_ffc_request  [get_bd_pins ips_demux/o_ffc_request] \
-  [get_bd_pins ffc_ddr3_streamer/i_ffc_request]
+  [get_bd_pins image_ddr3_streamer/i_ffc_request]
   connect_bd_net -net ips_demux_o_ips_dpm_en  [get_bd_pins ips_demux/o_ips_dpm_en] \
   [get_bd_pins sens_streamer/i_ips_dpm_en]
   connect_bd_net -net ips_demux_o_ips_fps  [get_bd_pins ips_demux/o_ips_fps] \
@@ -999,32 +1336,39 @@ proc create_hier_cell_image_processing_pipeline { parentCell nameHier } {
   connect_bd_net -net ips_demux_o_ips_led_en  [get_bd_pins ips_demux/o_ips_led_en] \
   [get_bd_pins sens_streamer/i_activity_led_en]
   connect_bd_net -net ips_demux_o_ips_mipi_csi_data_format  [get_bd_pins ips_demux/o_ips_mipi_csi_data_format] \
-  [get_bd_pins mipi_csi_axis_streamer/i_ips_mipi_csi_data_format]
+  [get_bd_pins axis_streamer/mipi_csi_data_format]
   connect_bd_net -net ips_demux_o_ips_mipi_csi_driver_rst  [get_bd_pins ips_demux/o_ips_mipi_csi_phy_rst] \
   [get_bd_pins ips_mipi_csi_phy_rst]
   connect_bd_net -net ips_demux_o_ips_mipi_csi_ppm  [get_bd_pins ips_demux/o_ips_mipi_csi_ppm] \
   [get_bd_pins sens_streamer/i_ips_mipi_csi_ppm]
   connect_bd_net -net ips_demux_o_ips_mipi_csi_stream_en  [get_bd_pins ips_demux/o_ips_mipi_csi_stream_en] \
-  [get_bd_pins mipi_csi_axis_streamer/i_enable]
+  [get_bd_pins axis_streamer/mipi_csi_enable]
   connect_bd_net -net ips_demux_o_ips_soft_trigger  [get_bd_pins ips_demux/o_ips_soft_trigger] \
   [get_bd_pins sens_streamer/i_soft_trigger]
   connect_bd_net -net ips_demux_o_ips_trigger_en  [get_bd_pins ips_demux/o_ips_trigger_en] \
   [get_bd_pins sens_streamer/i_ips_trigger_en]
   connect_bd_net -net ips_demux_o_ips_uvc_data_format  [get_bd_pins ips_demux/o_ips_uvc_data_format] \
-  [get_bd_pins uvc_axis_streamer/i_ips_mipi_csi_data_format]
+  [get_bd_pins axis_streamer/uvc_data_format1]
   connect_bd_net -net ips_demux_o_ips_uvc_ppm  [get_bd_pins ips_demux/o_ips_uvc_ppm] \
   [get_bd_pins sens_streamer/i_ips_uvc_ppm]
   connect_bd_net -net ips_demux_o_ips_uvc_stream_en  [get_bd_pins ips_demux/o_ips_uvc_stream_en] \
-  [get_bd_pins uvc_axis_streamer/i_enable]
+  [get_bd_pins axis_streamer/uvc_enable]
   connect_bd_net -net ipst_dout  [get_bd_pins ipst_mux/dout] \
   [get_bd_pins ipst]
   connect_bd_net -net pb_master_clk_mux_0_o_pb_master_clk  [get_bd_pins pb_master_clk_mux/o_pb_master_clk] \
   [get_bd_pins pb_master_clk] \
   [get_bd_pins sens_streamer/i_pb_master_clk]
   connect_bd_net -net proxy_board_pixel_clk_1  [get_bd_pins proxy_board_pixel_clk] \
+  [get_bd_pins bank_store/i_sensor_pixel_clk] \
   [get_bd_pins sens_streamer/i_sensor_pixel_clk]
+  connect_bd_net -net ref_clk_1  [get_bd_pins ref_clk] \
+  [get_bd_pins ddr3_sm_core/ref_clk]
   connect_bd_net -net sens_streamer_o_activity_led  [get_bd_pins sens_streamer/o_activity_led] \
   [get_bd_pins o_led]
+  connect_bd_net -net sens_streamer_o_bank_pixel_clk_domain  [get_bd_pins sens_streamer/o_bank_pixel_clk_domain] \
+  [get_bd_pins bank_store/i_bank_pixel_clk_domain]
+  connect_bd_net -net sens_streamer_o_bank_sys_clk_domain  [get_bd_pins sens_streamer/o_bank_sys_clk_domain] \
+  [get_bd_pins bank_store/i_bank_sys_clk_domain]
   connect_bd_net -net sens_streamer_o_bbl_acc  [get_bd_pins sens_streamer/o_bbl_acc] \
   [get_bd_pins bba]
   connect_bd_net -net sens_streamer_o_dbg_probe_0  [get_bd_pins sens_streamer/o_dbg_probe_0] \
@@ -1041,6 +1385,8 @@ proc create_hier_cell_image_processing_pipeline { parentCell nameHier } {
   [get_bd_pins ipst_mux/In7]
   connect_bd_net -net sens_streamer_sens_img_frame_number  [get_bd_pins sens_streamer/o_sens_img_frame_number] \
   [get_bd_pins sens_img_frame_number]
+  connect_bd_net -net sys_135_clk_1  [get_bd_pins sys_135_clk] \
+  [get_bd_pins ddr3_sm_core/sys_135_clk]
   connect_bd_net -net trigger_1  [get_bd_pins trigger] \
   [get_bd_pins sens_streamer/i_hard_trigger]
 
@@ -1121,27 +1467,12 @@ proc create_hier_cell_core_sys { parentCell nameHier } {
   create_bd_pin -dir I -type clk s_axi_aclk_0
   create_bd_pin -dir I -type rst s_axi_aresetn_0
   create_bd_pin -dir O -from 31 -to 0 ips
+  create_bd_pin -dir O -from 16 -to 0 coeff_table_idx_ratio
 
   # Create instance: axi_crossbar, and set properties
   set axi_crossbar [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_crossbar:2.1 axi_crossbar ]
-  set_property CONFIG.NUM_MI {12} $axi_crossbar
+  set_property CONFIG.NUM_MI {13} $axi_crossbar
 
-
-  # Create instance: config_flash_spi, and set properties
-  set config_flash_spi [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_quad_spi:3.2 config_flash_spi ]
-  set_property -dict [list \
-    CONFIG.C_FIFO_DEPTH {256} \
-    CONFIG.C_SHARED_STARTUP {1} \
-    CONFIG.C_SPI_MEMORY {2} \
-    CONFIG.C_SPI_MODE {2} \
-  ] $config_flash_spi
-
-
-  # Create instance: uart, and set properties
-  set uart [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_uart16550:2.0 uart ]
-
-  # Create instance: mipi_csi_iic, and set properties
-  set mipi_csi_iic [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_iic:2.1 mipi_csi_iic ]
 
   # Create instance: xadc, and set properties
   set xadc [ create_bd_cell -type ip -vlnv xilinx.com:ip:xadc_wiz:3.3 xadc ]
@@ -1171,16 +1502,6 @@ proc create_hier_cell_core_sys { parentCell nameHier } {
   # Create instance: irqs, and set properties
   set irqs [ create_bd_cell -type inline_hdl -vlnv xilinx.com:inline_hdl:ilconcat:1.0 irqs ]
   set_property CONFIG.NUM_PORTS {2} $irqs
-
-
-  # Create instance: proxy_board_spi, and set properties
-  set proxy_board_spi [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_quad_spi:3.2 proxy_board_spi ]
-  set_property -dict [list \
-    CONFIG.C_NUM_TRANSFER_BITS {16} \
-    CONFIG.C_USE_STARTUP {0} \
-    CONFIG.FIFO_INCLUDED {0} \
-    CONFIG.Multiples16 {3} \
-  ] $proxy_board_spi
 
 
   # Create instance: gpio
@@ -1232,53 +1553,54 @@ proc create_hier_cell_core_sys { parentCell nameHier } {
   # Create instance: ddr3_proxy
   create_hier_cell_ddr3_proxy $hier_obj ddr3_proxy
 
+  # Create instance: low_speed_ports
+  create_hier_cell_low_speed_ports $hier_obj low_speed_ports
+
+  # Create instance: timer, and set properties
+  set timer [ create_bd_cell -type ip -vlnv xilinx.com:ip:axi_timer:2.0 timer ]
+
   # Create interface connections
-  connect_bd_intf_net -intf_net Conn1 [get_bd_intf_pins config_flash_spi/STARTUP_IO_S] [get_bd_intf_pins STARTUP_IO_S]
+  connect_bd_intf_net -intf_net Conn1 [get_bd_intf_pins low_speed_ports/STARTUP_IO_S] [get_bd_intf_pins STARTUP_IO_S]
   connect_bd_intf_net -intf_net Conn2 [get_bd_intf_pins ddr3_proxy/ddr3_sm_core] [get_bd_intf_pins ddr3_rw_port]
   connect_bd_intf_net -intf_net axi_crossbar_0_M00_AXI [get_bd_intf_pins axi_crossbar/M00_AXI] [get_bd_intf_pins core/S_AXI_MDM]
   connect_bd_intf_net -intf_net axi_crossbar_0_M01_AXI [get_bd_intf_pins axi_crossbar/M01_AXI] [get_bd_intf_pins core/s_axi_intc]
-  connect_bd_intf_net -intf_net axi_crossbar_0_M04_AXI [get_bd_intf_pins axi_crossbar/M04_AXI] [get_bd_intf_pins config_flash_spi/AXI_LITE]
+  connect_bd_intf_net -intf_net axi_crossbar_0_M04_AXI [get_bd_intf_pins axi_crossbar/M04_AXI] [get_bd_intf_pins low_speed_ports/config_flash_AXI_LITE]
   connect_bd_intf_net -intf_net axi_crossbar_0_M06_AXI [get_bd_intf_pins axi_crossbar/M06_AXI] [get_bd_intf_pins gpio/S_AXI]
-  connect_bd_intf_net -intf_net axi_crossbar_0_M07_AXI [get_bd_intf_pins axi_crossbar/M07_AXI] [get_bd_intf_pins mipi_csi_iic/S_AXI]
-  connect_bd_intf_net -intf_net axi_crossbar_0_M09_AXI [get_bd_intf_pins axi_crossbar/M09_AXI] [get_bd_intf_pins proxy_board_spi/AXI_LITE]
   connect_bd_intf_net -intf_net axi_crossbar_M02_AXI [get_bd_intf_pins axi_crossbar/M02_AXI] [get_bd_intf_pins xadc/s_axi_lite]
   connect_bd_intf_net -intf_net axi_crossbar_M03_AXI [get_bd_intf_pins axi_crossbar/M03_AXI] [get_bd_intf_pins mipi_csi_tx/s_axi]
-  connect_bd_intf_net -intf_net axi_crossbar_M05_AXI [get_bd_intf_pins axi_crossbar/M05_AXI] [get_bd_intf_pins uart/S_AXI]
+  connect_bd_intf_net -intf_net axi_crossbar_M05_AXI [get_bd_intf_pins axi_crossbar/M05_AXI] [get_bd_intf_pins low_speed_ports/uart_S_AXI]
+  connect_bd_intf_net -intf_net axi_crossbar_M07_AXI [get_bd_intf_pins axi_crossbar/M07_AXI] [get_bd_intf_pins low_speed_ports/iic_S_AXI]
   connect_bd_intf_net -intf_net axi_crossbar_M08_AXI [get_bd_intf_pins axi_crossbar/M08_AXI] [get_bd_intf_pins ddr3_proxy/S_AXI_bram_c]
+  connect_bd_intf_net -intf_net axi_crossbar_M09_AXI [get_bd_intf_pins axi_crossbar/M09_AXI] [get_bd_intf_pins low_speed_ports/proxy_board_spi_AXI_LITE]
   connect_bd_intf_net -intf_net axi_crossbar_M10_AXI [get_bd_intf_pins axi_crossbar/M10_AXI] [get_bd_intf_pins ddr3_proxy/S_AXI_gpio_1]
   connect_bd_intf_net -intf_net axi_crossbar_M11_AXI [get_bd_intf_pins axi_crossbar/M11_AXI] [get_bd_intf_pins ddr3_proxy/S_AXI_gpio_0]
+  connect_bd_intf_net -intf_net axi_crossbar_M12_AXI [get_bd_intf_pins timer/S_AXI] [get_bd_intf_pins axi_crossbar/M12_AXI]
   connect_bd_intf_net -intf_net core_M_AXI_DP [get_bd_intf_pins core/M_AXI_DP] [get_bd_intf_pins axi_crossbar/S00_AXI]
+  connect_bd_intf_net -intf_net low_speed_ports_mipi_csi_iic1 [get_bd_intf_pins mipi_csi_iic] [get_bd_intf_pins low_speed_ports/mipi_csi_iic]
+  connect_bd_intf_net -intf_net low_speed_ports_proxy_board_spi1 [get_bd_intf_pins proxy_board_spi] [get_bd_intf_pins low_speed_ports/proxy_board_spi]
+  connect_bd_intf_net -intf_net low_speed_ports_uart1 [get_bd_intf_pins uart] [get_bd_intf_pins low_speed_ports/uart]
   connect_bd_intf_net -intf_net mipi_csi_s_axis_1 [get_bd_intf_pins mipi_csi_s_axis] [get_bd_intf_pins mipi_csi_tx/s_axis]
   connect_bd_intf_net -intf_net mipi_csi_tx_mipi_phy_if [get_bd_intf_pins mipi_csi_tx/mipi_phy_if] [get_bd_intf_pins mipi_csi_phy]
-  connect_bd_intf_net -intf_net perith_iic_rtl_0 [get_bd_intf_pins mipi_csi_iic] [get_bd_intf_pins mipi_csi_iic/IIC]
-  connect_bd_intf_net -intf_net perith_spi_rtl_0 [get_bd_intf_pins config_flash_spi] [get_bd_intf_pins config_flash_spi/SPI_0]
-  connect_bd_intf_net -intf_net perith_spi_rtl_1 [get_bd_intf_pins proxy_board_spi] [get_bd_intf_pins proxy_board_spi/SPI_0]
-  connect_bd_intf_net -intf_net perith_uart_rtl_0 [get_bd_intf_pins uart] [get_bd_intf_pins uart/UART]
+  connect_bd_intf_net -intf_net perith_spi_rtl_0 [get_bd_intf_pins config_flash_spi] [get_bd_intf_pins low_speed_ports/config_flash_spi]
 
   # Create port connections
   connect_bd_net -net SOC_reset_interconnect_aresetn  [get_bd_pins core/interconnect_aresetn] \
   [get_bd_pins xadc/s_axi_aresetn] \
-  [get_bd_pins mipi_csi_iic/s_axi_aresetn] \
-  [get_bd_pins proxy_board_spi/s_axi_aresetn] \
-  [get_bd_pins config_flash_spi/s_axi_aresetn] \
   [get_bd_pins gpio/sys_aresetn] \
-  [get_bd_pins uart/s_axi_aresetn] \
   [get_bd_pins axi_crossbar/aresetn] \
   [get_bd_pins mipi_csi_tx/s_axis_aresetn] \
-  [get_bd_pins ddr3_proxy/s_axi_aresetn]
+  [get_bd_pins ddr3_proxy/s_axi_aresetn] \
+  [get_bd_pins low_speed_ports/s_axi_aresetn] \
+  [get_bd_pins timer/s_axi_aresetn]
   connect_bd_net -net aclk_0_1  [get_bd_pins sys_clk] \
-  [get_bd_pins config_flash_spi/s_axi_aclk] \
-  [get_bd_pins mipi_csi_iic/s_axi_aclk] \
-  [get_bd_pins proxy_board_spi/s_axi_aclk] \
   [get_bd_pins gpio/sys_clk] \
-  [get_bd_pins uart/s_axi_aclk] \
-  [get_bd_pins config_flash_spi/ext_spi_clk] \
-  [get_bd_pins proxy_board_spi/ext_spi_clk] \
   [get_bd_pins xadc/s_axi_aclk] \
   [get_bd_pins core/sys_clk] \
   [get_bd_pins axi_crossbar/aclk] \
   [get_bd_pins mipi_csi_tx/s_axis_aclk] \
-  [get_bd_pins ddr3_proxy/sys_clk]
+  [get_bd_pins ddr3_proxy/sys_clk] \
+  [get_bd_pins low_speed_ports/sys_clk] \
+  [get_bd_pins timer/s_axi_aclk]
   connect_bd_net -net bba_1  [get_bd_pins bba] \
   [get_bd_pins gpio/bba]
   connect_bd_net -net core_peripheral_aresetn  [get_bd_pins core/peripheral_aresetn] \
@@ -1291,6 +1613,8 @@ proc create_hier_cell_core_sys { parentCell nameHier } {
   [get_bd_pins gpio/dbg_probe_1_mc_in]
   connect_bd_net -net gpio_coeff_table_ddr3_base_addr  [get_bd_pins gpio/coeff_table_ddr3_base_addr] \
   [get_bd_pins coeff_table_ddr3_base_addr_0]
+  connect_bd_net -net gpio_gpio2_io_o_0  [get_bd_pins gpio/coeff_table_idx_ratio] \
+  [get_bd_pins coeff_table_idx_ratio]
   connect_bd_net -net gpio_gpio_io_o_0  [get_bd_pins gpio/ips] \
   [get_bd_pins ips]
   connect_bd_net -net gpio_io_i_0_1  [get_bd_pins dbg_probe_0_mc_in] \
@@ -1299,10 +1623,10 @@ proc create_hier_cell_core_sys { parentCell nameHier } {
   [get_bd_pins gpio/ipst]
   connect_bd_net -net irqs_dout  [get_bd_pins irqs/dout] \
   [get_bd_pins core/irq]
+  connect_bd_net -net low_speed_ports_iic2intc_irpt  [get_bd_pins low_speed_ports/iic2intc_irpt] \
+  [get_bd_pins irqs/In1]
   connect_bd_net -net mipi_csi_dphy_clk_200M_1  [get_bd_pins mipi_csi_dphy_clk_200M] \
   [get_bd_pins mipi_csi_tx/dphy_clk_200M]
-  connect_bd_net -net mipi_csi_iic_iic2intc_irpt  [get_bd_pins mipi_csi_iic/iic2intc_irpt] \
-  [get_bd_pins irqs/In1]
   connect_bd_net -net superviser_1  [get_bd_pins superviser] \
   [get_bd_pins superviser_inv/Op1]
   connect_bd_net -net superviser_inv_Res  [get_bd_pins superviser_inv/Res] \
@@ -1608,6 +1932,8 @@ proc create_root_design { parentCell } {
   [get_bd_pins core_sys/mipi_csi_dphy_clk_200M]
   connect_bd_net -net core_sys_coeff_table_ddr3_base_addr_0  [get_bd_pins core_sys/coeff_table_ddr3_base_addr_0] \
   [get_bd_pins image_processing_pipeline/coeff_table_ddr3_base_addr]
+  connect_bd_net -net core_sys_coeff_table_idx  [get_bd_pins core_sys/coeff_table_idx_ratio] \
+  [get_bd_pins image_processing_pipeline/coeff_table_idx_ratio]
   connect_bd_net -net core_sys_ips  [get_bd_pins core_sys/ips] \
   [get_bd_pins image_processing_pipeline/ips]
   connect_bd_net -net core_sys_uart_txd  [get_bd_pins core_sys/uart_txd] \
@@ -1650,7 +1976,7 @@ proc create_root_design { parentCell } {
   # Create address segments
   assign_bd_address -offset 0x40000000 -range 0x00010000 -with_name SEG_bba_0_Reg -target_address_space [get_bd_addr_spaces core_sys/core/mblaze_core/Data] [get_bd_addr_segs core_sys/gpio/bba_ifn/S_AXI/Reg] -force
   assign_bd_address -offset 0x40030000 -range 0x00010000 -with_name SEG_coefs_table_addr_Reg -target_address_space [get_bd_addr_spaces core_sys/core/mblaze_core/Data] [get_bd_addr_segs core_sys/gpio/coeff_table_base_addr/S_AXI/Reg] -force
-  assign_bd_address -offset 0x44A10000 -range 0x00010000 -target_address_space [get_bd_addr_spaces core_sys/core/mblaze_core/Data] [get_bd_addr_segs core_sys/config_flash_spi/AXI_LITE/Reg] -force
+  assign_bd_address -offset 0x44A10000 -range 0x00010000 -target_address_space [get_bd_addr_spaces core_sys/core/mblaze_core/Data] [get_bd_addr_segs core_sys/low_speed_ports/config_flash_spi/AXI_LITE/Reg] -force
   assign_bd_address -offset 0x00000000 -range 0x00020000 -target_address_space [get_bd_addr_spaces core_sys/core/mblaze_core/Data] [get_bd_addr_segs core_sys/core/mblaze_local_memory/d_lmb_bram_if_cntlr/SLMB/Mem] -with_locktype global -force
   assign_bd_address -offset 0x40040000 -range 0x00010000 -with_name SEG_dbg_probe_Reg -target_address_space [get_bd_addr_spaces core_sys/core/mblaze_core/Data] [get_bd_addr_segs core_sys/gpio/dbg_probe_mc_in/S_AXI/Reg] -force
   assign_bd_address -offset 0x40010000 -range 0x00010000 -target_address_space [get_bd_addr_spaces core_sys/core/mblaze_core/Data] [get_bd_addr_segs core_sys/gpio/dbg_probe_mc_out/S_AXI/Reg] -force
@@ -1660,10 +1986,11 @@ proc create_root_design { parentCell } {
   assign_bd_address -offset 0x40090000 -range 0x00010000 -target_address_space [get_bd_addr_spaces core_sys/core/mblaze_core/Data] [get_bd_addr_segs core_sys/gpio/ips/S_AXI/Reg] -force
   assign_bd_address -offset 0x41200000 -range 0x00010000 -with_name SEG_mblaze_intc_Reg -target_address_space [get_bd_addr_spaces core_sys/core/mblaze_core/Data] [get_bd_addr_segs core_sys/core/mblaze_irq_cntr/S_AXI/Reg] -force
   assign_bd_address -offset 0x41400000 -range 0x00010000 -target_address_space [get_bd_addr_spaces core_sys/core/mblaze_core/Data] [get_bd_addr_segs core_sys/core/mdm/S_AXI/Reg] -force
-  assign_bd_address -offset 0x40810000 -range 0x00010000 -with_name SEG_mipi_csi_sccb_Reg -target_address_space [get_bd_addr_spaces core_sys/core/mblaze_core/Data] [get_bd_addr_segs core_sys/mipi_csi_iic/S_AXI/Reg] -force
+  assign_bd_address -offset 0x40810000 -range 0x00010000 -with_name SEG_mipi_csi_sccb_Reg -target_address_space [get_bd_addr_spaces core_sys/core/mblaze_core/Data] [get_bd_addr_segs core_sys/low_speed_ports/mipi_csi_iic/S_AXI/Reg] -force
   assign_bd_address -offset 0x44A00000 -range 0x00002000 -target_address_space [get_bd_addr_spaces core_sys/core/mblaze_core/Data] [get_bd_addr_segs core_sys/mipi_csi_tx/s_axi/Reg] -force
-  assign_bd_address -offset 0x44A20000 -range 0x00010000 -target_address_space [get_bd_addr_spaces core_sys/core/mblaze_core/Data] [get_bd_addr_segs core_sys/proxy_board_spi/AXI_LITE/Reg] -force
-  assign_bd_address -offset 0x44A40000 -range 0x00010000 -target_address_space [get_bd_addr_spaces core_sys/core/mblaze_core/Data] [get_bd_addr_segs core_sys/uart/S_AXI/Reg] -force
+  assign_bd_address -offset 0x44A20000 -range 0x00010000 -target_address_space [get_bd_addr_spaces core_sys/core/mblaze_core/Data] [get_bd_addr_segs core_sys/low_speed_ports/proxy_board_spi/AXI_LITE/Reg] -force
+  assign_bd_address -offset 0x41C00000 -range 0x00010000 -target_address_space [get_bd_addr_spaces core_sys/core/mblaze_core/Data] [get_bd_addr_segs core_sys/timer/S_AXI/Reg] -force
+  assign_bd_address -offset 0x44A40000 -range 0x00010000 -target_address_space [get_bd_addr_spaces core_sys/core/mblaze_core/Data] [get_bd_addr_segs core_sys/low_speed_ports/uart/S_AXI/Reg] -force
   assign_bd_address -offset 0x44A50000 -range 0x00010000 -target_address_space [get_bd_addr_spaces core_sys/core/mblaze_core/Data] [get_bd_addr_segs core_sys/xadc/s_axi_lite/Reg] -force
   assign_bd_address -offset 0x00000000 -range 0x00020000 -target_address_space [get_bd_addr_spaces core_sys/core/mblaze_core/Instruction] [get_bd_addr_segs core_sys/core/mblaze_local_memory/i_lmb_bram_if_cntlr/SLMB/Mem] -with_locktype global -force
 

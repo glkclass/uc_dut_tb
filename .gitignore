@@ -1,6 +1,7 @@
+user.env
+flash_spi_interface.env
 build
 tmp.opt
-user_env
 __pycache__
 rtl/ip/bram_2x128B_64_2/*
 !rtl/ip/bram_2x128B_64_2/*.xci

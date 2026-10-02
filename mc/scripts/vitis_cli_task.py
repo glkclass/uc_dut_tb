@@ -119,6 +119,7 @@ def create_project(args):
             )
             app.set_app_config(key="USER_COMPILE_DEBUG_LEVEL", values="-g3")
             app.set_app_config(key="USER_COMPILE_OPTIMIZATION_LEVEL", values="-O0")
+            app.set_app_config(key="USER_COMPILE_DEBUG_OTHER_FLAGS", values="-Og")
         elif "RELEASE" == args.build_config:
             log.debug(MC_APP_BUILD_DEFINES_RELEASE)
             app.append_app_config(
@@ -160,6 +161,10 @@ def build_app(args):
         log.debug(f"Get application {MC_APP_NAME}..")
         app = client.get_component(name=MC_APP_NAME)
 
+        log.info(f"Clean application: {MC_APP_NAME} ..")
+        app.clean()
+        log.info("..Done")
+
         log.info(f"Build application: {MC_APP_NAME} ..")
         app.build()
         log.info("..Done")
@@ -171,7 +176,7 @@ def build_app(args):
         log.debug("Vitis client disposed. Finished.")
 
 
-def load_elf(args):
+def upload_elf(args):
     """
     Upload elf to already running Mb using xsdb tools
     """
@@ -202,7 +207,7 @@ if __name__ == "__main__":
         "--task",
         required=True,
         help="Task to execute",
-        choices=["create_project", "build_app", "load_elf", "debug"],
+        choices=["create_project", "build_app", "upload_elf", "debug"],
     )
 
     parser.add_argument(

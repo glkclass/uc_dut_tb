@@ -1,10 +1,10 @@
 .ONESHELL:
 SHELL=/bin/bash
 
--include env
+-include config.env
 export
 
--include user_env
+-include user.env
 export
 
 
@@ -22,10 +22,8 @@ COMPILE_FILE_NAME ?= ""
 
 # rules
 debug:
-	$(ECHO_TOOLS_HEADER)
-	$(SETUP_TOOLS)
-	python3  utils.py --task check_log_errors --log_file ${LOG}
-	$(ECHO_FOOTER)
+# 	python3  utils.py --task check_log_errors --log_file ${LOG}
+# 	echo ${FLASH_SPI_INTERFACE}
 
 create_project:
 	$(ECHO_TOOLS_HEADER)
@@ -35,7 +33,7 @@ create_project:
 	cd ${ROOT_PATH}
 	git clean -qfxd
 	cd scripts
-	@rsync -a --ignore-missing-args ${BACKUP_DIR}/scripts/user_env user_env
+	@rsync -a --ignore-missing-args ${BACKUP_DIR}/scripts/user.env user.env
 	@echo "$(INFO_PREFIX) | See ${LOG}, 1 for details"
 	@echo "$(INFO_PREFIX) | Build config: ${APP_BUILD_CONFIG}"
 	vitis -s vitis_cli_task.py --task create_project --build_config ${APP_BUILD_CONFIG} &>> ${LOG}
@@ -71,11 +69,11 @@ build_app:
 	@if [ $$? -ne 0 ]; then exit 1; fi
 	$(ECHO_FOOTER)
 
-load_elf:
+upload_elf:
 	$(ECHO_TOOLS_HEADER)
 	$(SETUP_TOOLS)
 	@echo "$(INFO_PREFIX) | See ${LOG}, 1 for details"
-	vitis -s vitis_cli_task.py --task load_elf &>> ${LOG}
+	vitis -s vitis_cli_task.py --task upload_elf &>> ${LOG}
 	python3  utils.py --task check_log_errors --log_file ${LOG}
 	@if [ $$? -ne 0 ]; then exit 1; fi
 	$(ECHO_FOOTER)

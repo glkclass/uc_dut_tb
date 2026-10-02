@@ -1,10 +1,10 @@
 .ONESHELL:
 SHELL=/bin/bash
 
--include env
+-include config.env
 export
 
--include user_env
+-include user.env
 export
 
 LOG ?= $(TB_LOG)

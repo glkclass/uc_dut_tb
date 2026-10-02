@@ -27,10 +27,12 @@ log = logging.getLogger()
 
 def generate_flash_type_header():
     with open(MC_FIRMWARE_FLASH_TYPE_HEADER, "w") as f:
-        if "SPIx4" == FLASH_SPI_INTERFACE:
-            f.write(f"#define FLASH_SPIX4\n")
-        elif "SPIx1" == FLASH_SPI_INTERFACE:
-            f.write(f"#define FLASH_SPIX1\n")
+        if "x4" == FLASH_SPI_INTERFACE:
+            f.write(f"#define FLASH_SPI_INTERFACE_WIDTH 4\n")
+        elif "x1" == FLASH_SPI_INTERFACE:
+            f.write(f"#define FLASH_SPI_INTERFACE_WIDTH 1\n")
+        else:
+            f.write(f"FLASH_SPI_INTERFACE not defined !\n")
 
 
 def generate_gitversion_header():

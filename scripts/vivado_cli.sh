@@ -5,16 +5,24 @@ root_path=".."
 # TODO: report_utilization
 
 tasks=( "debug"
+        "copy_bin_file"
         "create_vivado_project"
         "update_vivado_project"
         "synth"
         "generate_bitstream"
+        "generate_aes_bitstream"
         "impl"
         "generate_impl_artefacts"
         "generate_platform"
-        "load_fpga"
-        "program_flash"
-        "program_n_flash"
+        "upload_fpga_vivado"
+        "upload_config_flash_vivado"
+        "upload_n_config_flash_vivado"
+        "program_aes_key_vivado"
+        "upload_fpga_ofp_loader"
+        "upload_config_flash_ofp_loader"
+        "upload_settings_flash_ofp_loader"
+        "upload_config_settings_flash_ofp_loader"
+        "combine_config_settings_bin_files"
         "detect_jtag_targets" )
 
 declare -A task_desc
@@ -23,12 +31,18 @@ task_desc[create_vivado_project]="Vivado. Create project."
 task_desc[update_vivado_project]="Vivado. Update project: generate 2 tcl scripts used to create project and block design in future from scratch"
 task_desc[synth]="Vivado. Run synthesis"
 task_desc[generate_bitstream]="Vivado. Generate bitstreams: *.bit & *.bin"
+task_desc[generate_aes_bitstream]="Vivado. Generate AES bitstreams: *.bit & *.bin"
 task_desc[impl]="Vivado. Run implementation"
 task_desc[generate_impl_artefacts]="Vivado. Generate post-implementation artefacts (func and time netlists, sdf files, ..)"
 task_desc[generate_platform]="Vivado. Generate platform xsa file"
-task_desc[load_fpga]="Vivado. Load fpga. Bit file: $VIVADO_BIT_STREAM"
-task_desc[program_flash]="Vivado. Program config flash. Bin file: $PROGRAM_BIN_STREAM"
-task_desc[program_n_flash]="Vivado. Program N config flashes. Bin file: $PROGRAM_BIN_STREAM"
+task_desc[upload_fpga_vivado]="Vivado. Upload fpga. Bit file: $PROGRAM_BIT_STREAM"
+task_desc[upload_config_flash_vivado]="Vivado. Upload config flash. Bin file: $PROGRAM_BIN_STREAM"
+task_desc[upload_n_config_flash_vivado]="Vivado. Upload N config flashes. Bin file: $PROGRAM_BIN_STREAM"
+task_desc[program_aes_key_vivado]="Vivado. Program AES key. Key file: $PROGRAM_BIN_STREAM"
+task_desc[upload_fpga_ofp_loader]="OpenFPGALoader. Upload fpga. Bit file: $PROGRAM_BIT_STREAM"
+task_desc[upload_config_flash_ofp_loader]="OpenFPGALoader. Upload config flash. Bin file: $PROGRAM_BIN_STREAM"
+task_desc[upload_settings_flash_ofp_loader]="OpenFPGALoader. Upload Settings flash. Bin file: $SETTINGS_FLASH_FIRMWARE_BIN"
+task_desc[upload_config_settings_flash_ofp_loader]="OpenFPGALoader. Upload Config & Settings flashes. Bin file: $CONFIG_SETTINGS_FLASH_BIN"
 
 task_is_legal=0
 
@@ -67,7 +81,7 @@ function main {
     done
 
     if [[ $task_is_legal == 1 ]]; then
-        echo "INFO | See $log_path, 1 and wait for finish.."
+        echo "INFO | See console & $log_path, 1 and wait for finish.."
     else
         echo "ERROR | Unsupported task: <$task>!"
         echo "Usage: script_name -t | --task [${tasks[@]}]"
@@ -78,11 +92,21 @@ function main {
 
     if [[ "$task" == "create_vivado_project" ]]; then
         $task
-    elif [[ "$task" == "load_fpga" ]]; then
+    elif [[ "$task" == "copy_bin_file" ]]; then
         $task
-    elif [[ "$task" == "program_flash" ]]; then
+    elif [[ "$task" == "combine_config_settings_bin_files" ]]; then
         $task
-    elif [[ "$task" == "program_n_flash" ]]; then
+    elif [[ "$task" == "upload_fpga_vivado" ]]; then
+        $task
+    elif [[ "$task" == "upload_config_flash_vivado" ]]; then
+        $task
+    elif [[ "$task" == "upload_n_config_flash_vivado" ]]; then
+        $task
+    elif [[ "$task" == "upload_fpga_ofp_loader" ]]; then
+        $task
+    elif [[ "$task" == "upload_config_flash_ofp_loader" ]]; then
+        $task
+    elif [[ "$task" == "upload_settings_flash_ofp_loader" ]]; then
         $task
     elif [[ "$task" == "detect_jtag_targets" ]]; then
         $task
@@ -118,29 +142,31 @@ function println {
 }
 
 
+function copy_bin_file {
+    echo "INFO | Copy ${VIVADO_BIN_STREAM} to ${ARTEFACT_BIN_STREAM}"
+    cp -r ${VIVADO_BIN_STREAM} ${ARTEFACT_BIN_STREAM}
+    echo "INFO | Copy ${VIVADO_BIT_STREAM} to ${ARTEFACT_BIT_STREAM}"
+    cp -r ${VIVADO_BIT_STREAM} ${ARTEFACT_BIT_STREAM}
+}
+
+
 function debug {
     echo "Define stuff!"
 }
 
 
 function create_vivado_project {
-
-    # create rtl include configs
-    spi_flash_type_include="${root_path%/}/rtl/common/spi_flash_type.vh"
-    if [[ $FLASH_SPI_INTERFACE == SPIx4 ]]; then
-        echo "\`define   FLASH_SPIX4" > $spi_flash_type_include
-    elif [[ $FLASH_SPI_INTERFACE == SPIx1 ]]; then
-        echo "\`define   FLASH_SPIX1" > $spi_flash_type_include
+    # create rtl include and xdc configs
+    if [[ $FLASH_SPI_INTERFACE == "x4" ]]; then
+        echo "FLASH_SPI_INTERFACE=x4" > $FLASH_SPI_INTERFACE_ENV
+        echo "\`define   FLASH_SPI_INTERFACE_X4" > $VIVADO_SPI_FLASH_TYPE_INCLUDE
+        echo "set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design]" > $VIVADO_SPI_FLASH_PROPERTY_XDC
+    elif [[ $FLASH_SPI_INTERFACE == "x1" ]]; then
+        echo "FLASH_SPI_INTERFACE=x1" > $FLASH_SPI_INTERFACE_ENV
+        echo "\`define   FLASH_SPI_INTERFACE_X1" > $VIVADO_SPI_FLASH_TYPE_INCLUDE
+        echo "set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 1 [current_design]" > $VIVADO_SPI_FLASH_PROPERTY_XDC
     else
-        echo "" > $spi_flash_type_include
-    fi
-
-    spi_flash_property_xdc="${root_path%/}/syn/xdc/spi_flash_property.xdc"
-    if [[ $FLASH_SPI_INTERFACE == SPIx4 ]]; then
-        echo "set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 4 [current_design]" > $spi_flash_property_xdc
-    elif [[ $FLASH_SPI_INTERFACE == SPIx1 ]]; then
-        echo "set_property BITSTREAM.CONFIG.SPI_BUSWIDTH 1 [current_design]" > $spi_flash_property_xdc
-    else
+        echo "" > $VIVADO_SPI_FLASH_TYPE_INCLUDE
         echo "ERROR | .. Failed. Terminated. Wrong <FLASH_SPI_INTERFACE> env var value: $FLASH_SPI_INTERFACE"
         exit 1
     fi
@@ -159,21 +185,21 @@ function create_vivado_project {
     check_log_errors
 
     # customize config_flash
-    echo "INFO | Customize config flash .."
+    echo "INFO | Customize config flash type: ${FLASH_SPI_INTERFACE} .."
     vivado -nolog -nojournal -notrace -mode batch -source vivado_cli_task.tcl -tclargs customize_config_flash $FLASH_SPI_INTERFACE &>> $log_path
     println
     check_log_errors
 }
 
 
-function load_fpga {
-    [ ! -f $VIVADO_BIT_STREAM ] && echo "ERROR | Can't find bit file: $VIVADO_BIT_STREAM. Terminated!" && exit 1
+function upload_fpga_vivado {
+    [ ! -f $PROGRAM_BIT_STREAM ] && echo "ERROR | Can't find bit file: $PROGRAM_BIT_STREAM. Terminated!" && exit 1
     $VIVADO_BIN_TOOL -nolog -nojournal -notrace -mode batch -source vivado_cli_task.tcl -tclargs ${FUNCNAME[0]} &>> $log_path
     check_log_errors
 }
 
 
-function program_flash {
+function upload_config_flash_vivado {
     [ ! -f $PROGRAM_BIN_STREAM ] && echo "ERROR | Can't find bin file: $PROGRAM_BIN_STREAM. Terminated!" && exit 1
     $VIVADO_BIN_TOOL -nolog -nojournal -notrace -mode batch -source vivado_cli_task.tcl -tclargs ${FUNCNAME[0]} &>> $log_path
     check_log_errors
@@ -200,7 +226,7 @@ function detect_jtag_targets {
 }
 
 
-function program_n_flash {
+function upload_n_config_flash_vivado {
     [ ! -f $PROGRAM_BIN_STREAM ] && echo "ERROR | Can't find bin file: $PROGRAM_BIN_STREAM. Terminated!" && exit 1
 
     targets=()
@@ -222,7 +248,7 @@ function program_n_flash {
     # loop on applied jtag connections
     for target in ${targets[@]}; do
         echo "INFO | Programming. Bitstream: ${PROGRAM_BIN_STREAM}. Config flash: $FLASH_DEVICE. Jtag target: ${target}"
-        $VIVADO_BIN_TOOL -nolog -nojournal -notrace -mode batch -source vivado_cli_task.tcl -tclargs program_flash ${target} &>> $log_path
+        $VIVADO_BIN_TOOL -nolog -nojournal -notrace -mode batch -source vivado_cli_task.tcl -tclargs upload_config_flash_vivado ${target} &>> $log_path
 
         # polling hw_server process till is stopped
         echo "INFO | Wait for hw_server stop.."
@@ -253,5 +279,33 @@ function program_n_flash {
     echo "INFO | Done"
 }
 
+
+function upload_fpga_ofp_loader {
+    [ ! -f $PROGRAM_BIT_STREAM ] && echo "ERROR | Can't find bit file: $PROGRAM_BIT_STREAM. Terminated!" && exit 1
+    openFPGALoader --cable digilent_hs3 --fpga-part $FPGA_DEVICE_FULL_NAME --verify --bitstream ${PROGRAM_BIT_STREAM}
+}
+
+function upload_config_flash_ofp_loader {
+    [ ! -f $PROGRAM_BIN_STREAM ] && echo "ERROR | Can't find bit file: $PROGRAM_BIN_STREAM. Terminated!" && exit 1
+    openFPGALoader --cable digilent_hs3 --fpga-part $FPGA_DEVICE_FULL_NAME --write-flash --verify --bitstream ${PROGRAM_BIN_STREAM}
+}
+
+function upload_settings_flash_ofp_loader {
+    [ ! -f $SETTINGS_FLASH_FIRMWARE_BIN ] && echo "ERROR | Can't find bit file: $SETTINGS_FLASH_FIRMWARE_BIN. Terminated!" && exit 1
+    openFPGALoader --cable digilent_hs3 --fpga-part $FPGA_DEVICE_FULL_NAME --write-flash --verify --offset 2097152 --bitstream ${SETTINGS_FLASH_FIRMWARE_BIN}
+}
+
+function upload_config_settings_flash_ofp_loader {
+    combine_config_settings_bin_files
+    [ ! -f $CONFIG_SETTINGS_FLASH_BIN ] && echo "ERROR | Can't find bit file: $CONFIG_SETTINGS_FLASH_BIN. Terminated!" && exit 1
+    openFPGALoader --cable digilent_hs3 --fpga-part $FPGA_DEVICE_FULL_NAME --write-flash --verify --bitstream ${CONFIG_SETTINGS_FLASH_BIN}
+}
+
+function combine_config_settings_bin_files {
+    [ ! -f $PROGRAM_BIN_STREAM ] && echo "ERROR | Can't find bit file: $PROGRAM_BIN_STREAM. Terminated!" && exit 1
+    [ ! -f $SETTINGS_FLASH_FIRMWARE_BIN ] && echo "ERROR | Can't find bit file: $SETTINGS_FLASH_FIRMWARE_BIN. Terminated!" && exit 1
+    dd if=$PROGRAM_BIN_STREAM ] of=$CONFIG_SETTINGS_FLASH_BIN conv=notrunc
+    dd if=$SETTINGS_FLASH_FIRMWARE_BIN ] of=$CONFIG_SETTINGS_FLASH_BIN conv=notrunc seek=2048 bs=1k
+}
 
 main
