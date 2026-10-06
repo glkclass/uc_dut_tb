@@ -1,6 +1,7 @@
 --incr
 --relax
 
+../${RTL_PATH}/ip/bram_16K_18_18/sim/bram_16K_18_18.v
 ../${RTL_PATH}/ip/bram_2x2K_16_64/sim/bram_2x2K_16_64.v
 ../${RTL_PATH}/ip/bram_2x2K_64_16/sim/bram_2x2K_64_16.v
 ../${RTL_PATH}/ip/bram_2x4K_64_64/sim/bram_2x4K_64_64.v
@@ -17,6 +18,7 @@
 ../${IP_BD_GEN_PATH}/oct640_cu_x8_spi_frontend_0/sim/oct640_cu_x8_spi_frontend_0.v
 ../${IP_BD_GEN_PATH}/oct640_cu_uvc_axis_streamer_0/sim/oct640_cu_uvc_axis_streamer_0.v
 ../${IP_BD_GEN_PATH}/oct640_cu_sens_streamer_0/sim/oct640_cu_sens_streamer_0.v
+../${IP_BD_GEN_PATH}/oct640_cu_image_histo_calculator_0/sim/oct640_cu_image_histo_calculator_0.v
 ../${IP_BD_GEN_PATH}/oct640_cu_ips_demux_0/sim/oct640_cu_ips_demux_0.v
 ../${IP_BD_GEN_PATH}/oct640_cu_pb_master_clk_mux_0/sim/oct640_cu_pb_master_clk_mux_0.v
 ../${IP_BD_GEN_PATH}/oct640_cu_dbg_probe_mux_wrapper_0/sim/oct640_cu_dbg_probe_mux_wrapper_0.v

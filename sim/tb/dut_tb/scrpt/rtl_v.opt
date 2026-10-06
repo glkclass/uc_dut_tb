@@ -22,7 +22,7 @@
 ../${RTL_PATH}/core/fake_proxy_board.v
 ../${RTL_PATH}/core/bank_store.v
 ../${RTL_PATH}/core/image_processor.v
+../${RTL_PATH}/core/image_histo_calculator.v
 ../${RTL_PATH}/core/sens_streamer.v
 ../${RTL_PATH}/core/x8_spi_frontend.v
 ../${BD_GEN_PATH}/sim/oct640_cu.v
-

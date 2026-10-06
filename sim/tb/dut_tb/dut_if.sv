@@ -1,9 +1,17 @@
-/******************************************************************************************************************************
+/***************************************************************************************************
     Project         :   AM
     Date            :   June 2025
     Interface       :   dut_if
     Description     :
-******************************************************************************************************************************/
+***************************************************************************************************/
+
+`default_nettype none
+
+import oct640_cu_util_pkg::N_IMAGE_COL;
+import oct640_cu_util_pkg::N_IMAGE_ROW;
+
+import oct640_cu_util_pkg::N_IMAGE_COL_W;
+import oct640_cu_util_pkg::N_IMAGE_ROW_W;
 
 
 import oct640_cu_util_pkg::COEFF_A_W;
@@ -20,55 +28,69 @@ import oct640_cu_util_pkg::BST_SIZE_W;
 import oct640_cu_util_pkg::BST_NUM_W;
 import oct640_cu_util_pkg::DDR3_DQ_W;
 
-// ****************************************************************************************************************************
+// *************************************************************************************************
 interface dut_if (
-    input               rst_n, ddr_initilaized, sys_clk );
-    sys_if              sys_vif();
-    pb_if               pb_vif();
-    axis_if             csi_vif();
-    sm_core_rw_if       core_sys_rw_vif();
-    sns_rd_ddr3_if      sns_rd_ddr3_vif();
-    sns_rd_coeff_if     sns_rd_coeff_vif();
+    input wire                  rst_n, ddr_initilaized, sys_clk);
+    sys_if                      sys_vif();
+    pb_if                       pb_vif();
+    axis_if                     csi_vif();
+    sm_core_rw_if               core_sys_rw_vif();
+    sns_rd_ddr3_if              sns_rd_ddr3_vif();
+    sns_rd_coeff_if             sns_rd_coeff_vif();
+    image_hc_stream_if          image_hc_stream_vif();
 endinterface
 
 
 interface sys_if ();
-    logic   [32 - 1             :   0]      ips;
-    logic   [8 - 1              :   0]      ipst;
-    logic   [18 - 1             :   0]      coeff_table_ddr3_base_addr;
+  logic   [32 - 1             :   0]      ips;
+  logic   [8 - 1              :   0]      ipst;
+  logic   [18 - 1             :   0]      coeff_table_ddr3_base_addr;
+endinterface
+
+
+interface image_hc_stream_if ();
+  logic                                 pixel_clk;
+  logic [16 - 1                 :   0]  frame_number;
+  logic [N_IMAGE_ROW_W - 1      :   0]  row_number;
+  logic                                 frame_start;
+  logic                                 row_start;
+  logic                                 bank_en;
+  logic                                 bank_we;
+  logic [N_IMAGE_COL_W - 1      :   0]  bank_addr;
+  logic [IMAGE_PIXEL_W - 1      :   0]  bank_din;
 endinterface
 
 
 interface sns_rd_coeff_if ();
-    // coeff rd domain
-    logic                                           row_start_sys_clk;
-    logic                                           i_sensor_pixel_clk;
-    logic                                           coeff_pixel_valid;
-    logic   [9 - 1                      :   0]      coeff_ram_addr_b;   // 4k = 2 * 256 x 64
-    logic   [4 * RAM_DATA_W - 1         :   0]      coeff_ram_data_b;   // 64
-    logic   [2 * RAM_DATA_W - 1         :   0]      coeff_3_2;          // 32
-    logic   [3 * RAM_DATA_W - 1         :   0]      coeff_2_1_0;        // 48
-    logic   [RAM_DATA_W - 1             :   0]      coeff_0, coeff_1, coeff_2;
+  // coeff rd domain
+  logic                                           row_start_sys_clk;
+  logic                                           i_sensor_pixel_clk;
+  logic                                           coeff_pixel_valid;
+  logic   [9 - 1                      :   0]      coeff_ram_addr_b;   // 4k = 2 * 256 x 64
+  logic   [4 * RAM_DATA_W - 1         :   0]      coeff_ram_data_b;   // 64
+  logic   [2 * RAM_DATA_W - 1         :   0]      coeff_3_2;          // 32
+  logic   [3 * RAM_DATA_W - 1         :   0]      coeff_2_1_0;        // 48
+  logic   [RAM_DATA_W - 1             :   0]      coeff_0, coeff_1, coeff_2;
 
-    logic   unsigned  [COEFF_A_W - 1      :   0]    coeff_a;
-    logic   signed    [COEFF_B_W - 1      :   0]    coeff_b;
+  logic   unsigned  [COEFF_A_W - 1      :   0]    coeff_a;
+  logic   signed    [COEFF_B_W - 1      :   0]    coeff_b;
 endinterface
 
 interface sns_rd_ddr3_if ();
-    // ddr3 sm core rd port for coeff reading
-    logic                                               rd_coeff_clk;
-    logic                                               rd_coeff_rw_req;
-    logic                                               rd_coeff_rw_mod;
-    logic                                               rd_coeff_rw_bsy;
-    logic      [DDR3_ROW_ADDR_W - 1        : 0]         rd_coeff_row_base_addr;
-    logic      [DDR3_COL_W - 4             : 0]         rd_coeff_bl8_offs;
-    logic      [BST_SIZE_W - 1             : 0]         rd_coeff_burst_size;
-    logic      [BST_NUM_W - 1              : 0]         rd_coeff_burst_num;
+  // ddr3 sm core rd port for coeff reading
+  logic                                               rd_coeff_clk;
+  logic                                               rd_coeff_rw_req;
+  logic                                               rd_coeff_rw_mod;
+  logic                                               rd_coeff_rw_bsy;
+  logic      [DDR3_ROW_ADDR_W - 1        : 0]         rd_coeff_row_base_addr;
+  logic      [DDR3_COL_W - 4             : 0]         rd_coeff_bl8_offs;
+  logic      [BST_SIZE_W - 1             : 0]         rd_coeff_burst_size;
+  logic      [BST_NUM_W - 1              : 0]         rd_coeff_burst_num;
 
 
-    logic                                               rd_coeff_bram_we;
-    logic      [1 + DDR3_COL_W - 3          : 0]        rd_coeff_bram_addr;
-    logic      [4 * DDR3_DQ_W - 1           : 0]        rd_coeff_bram_din;
+  logic                                               rd_coeff_bram_we;
+  logic      [1 + DDR3_COL_W - 3          : 0]        rd_coeff_bram_addr;
+  logic      [4 * DDR3_DQ_W - 1           : 0]        rd_coeff_bram_din;
 endinterface
 
 
@@ -90,64 +112,56 @@ endinterface
 
 
 interface pb_if ();
-    // sensor image if
-    logic [IMAGE_PIXEL_W - 1    :   0]  data;
-    logic
-        master_clk = 1'b0,
-        pixel_clk = 1'b0,
-        hsync = 1'b0,
-        vsync = 1'b0,
-        trigger_in = 1'b0,
-        trigger_out = 1'b0;
+  // sensor image if
+  logic [IMAGE_PIXEL_W - 1    :   0]  data;
+  logic
+    master_clk = 1'b0,
+    pixel_clk = 1'b0,
+    hsync = 1'b0,
+    vsync = 1'b0,
+    trigger_in = 1'b0,
+    trigger_out = 1'b0;
 
-    // spi configuration if
-    logic
-        sck,
-        cs_n,
-        mosi;
+  // spi configuration if
+  logic
+    sck,
+    cs_n,
+    mosi;
 endinterface
 
 
 
 interface axis_if ();
-    // AXI Stream if (sys_clk)
-    logic   [3 * 4 * AXIS_DATA_W - 1    :   0]          axis_tdata;
-    logic   [2 - 1                      :   0]          axis_tdest;
-    logic   [24 - 1                     :   0]          axis_tkeep;
-    logic                                               axis_tlast;
-    logic   [96 - 1                     :   0]          axis_tuser;
-    logic                                               axis_tvalid;
-    logic                                               axis_tready = 1'b0;
-    //
-    logic                                               axis_hsh;
-    logic   [AXIS_DATA_W - 1    :   0]                  axis_tword[4];
-    logic                                               axis_frame_start;
-    logic   [6 - 1    :   0]                            mipi_csi_data_type;
-    logic   [16 - 1    :   0]                           mipi_csi_frame_number;
-    logic   [16 - 1    :   0]                           mipi_csi_row_number;
-    logic   [16 - 1    :   0]                           mipi_csi_word_count;
+  // AXI Stream if (sys_clk)
+  logic   [3 * 4 * AXIS_DATA_W - 1    :   0]          axis_tdata;
+  logic   [2 - 1                      :   0]          axis_tdest;
+  logic   [24 - 1                     :   0]          axis_tkeep;
+  logic                                               axis_tlast;
+  logic   [96 - 1                     :   0]          axis_tuser;
+  logic                                               axis_tvalid;
+  logic                                               axis_tready = 1'b0;
+  //
+  logic                                               axis_hsh;
+  logic   [AXIS_DATA_W - 1    :   0]                  axis_tword[4];
+  logic                                               axis_frame_start;
+  logic   [6 - 1    :   0]                            mipi_csi_data_type;
+  logic   [16 - 1    :   0]                           mipi_csi_frame_number;
+  logic   [16 - 1    :   0]                           mipi_csi_row_number;
+  logic   [16 - 1    :   0]                           mipi_csi_word_count;
 
+    assign axis_hsh = axis_tvalid & axis_tready;        // axis handshake
 
+    assign axis_tword[0] = axis_tdata[1 * AXIS_DATA_W - 1 : 0 * AXIS_DATA_W];
+    assign axis_tword[1] = axis_tdata[2 * AXIS_DATA_W - 1 : 1 * AXIS_DATA_W];
+    assign axis_tword[2] = axis_tdata[3 * AXIS_DATA_W - 1 : 2 * AXIS_DATA_W];
+    assign axis_tword[3] = axis_tdata[4 * AXIS_DATA_W - 1 : 3 * AXIS_DATA_W];
 
-    assign         axis_hsh = axis_tvalid & axis_tready;        // axis handshake
-
-    assign         axis_tword[0] = axis_tdata[1 * AXIS_DATA_W - 1 : 0 * AXIS_DATA_W];
-    assign         axis_tword[1] = axis_tdata[2 * AXIS_DATA_W - 1 : 1 * AXIS_DATA_W];
-    assign         axis_tword[2] = axis_tdata[3 * AXIS_DATA_W - 1 : 2 * AXIS_DATA_W];
-    assign         axis_tword[3] = axis_tdata[4 * AXIS_DATA_W - 1 : 3 * AXIS_DATA_W];
-
-    assign         axis_frame_start         = axis_tuser[0];
-    assign         mipi_csi_data_type       = axis_tuser[7  : 1];
-    assign         mipi_csi_frame_number    = axis_tuser[31 : 16];
-    assign         mipi_csi_row_number      = axis_tuser[47 : 32];
-    assign         mipi_csi_word_count      = axis_tuser[63 : 48];
-
-
-
+    assign axis_frame_start         = axis_tuser[0];
+    assign mipi_csi_data_type       = axis_tuser[7  : 1];
+    assign mipi_csi_frame_number    = axis_tuser[31 : 16];
+    assign mipi_csi_row_number      = axis_tuser[47 : 32];
+    assign mipi_csi_word_count      = axis_tuser[63 : 48];
 endinterface
+`default_nettype wire
 
-
-
-
-// ****************************************************************************************************************************
-
+// *************************************************************************************************

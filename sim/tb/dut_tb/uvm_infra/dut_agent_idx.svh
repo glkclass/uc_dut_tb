@@ -16,7 +16,8 @@ enum {
     CORE_SYS,
     SNS_RD_DDR3,
     SNS_RD_COEFF,
-    PROXY_BOARD_TRIGGER
+    PROXY_BOARD_TRIGGER,
+    IMAGE_HC_STREAM
 } agnt;
 // ****************************************************************************************************************************
 

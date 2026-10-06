@@ -93,9 +93,9 @@ run: run.tcl
 	$(SETUP_TOOLS)
 	@mkdir -p $(BUILD_FOLDER)
 	@cd $(BUILD_FOLDER)
-	envsubst < ../$(DUTB_TEST_CONFIG) > tmp.opt
+	envsubst < ../$(DUT_TB_TEST_CONFIG) > tmp.opt
 	envsubst < ../run_tb.opt >> tmp.opt
-	@$(SIM_BIN_TOOL) -f tmp.opt
+	@$(SIM_BIN_TOOL) -f tmp.opt 2>&1 | tee ../run.log
 	$(ECHO_FOOTER)
 
 

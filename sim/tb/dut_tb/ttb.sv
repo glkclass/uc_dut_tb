@@ -1,9 +1,9 @@
-/******************************************************************************************************************************
+/***************************************************************************************************
     Project         :   CU
     Date            :   June 2026
     Module          :   ttb
     Description     :
-******************************************************************************************************************************/
+***************************************************************************************************/
 
 `include "uvm_macros.svh"
 import uvm_pkg::*;
@@ -11,7 +11,7 @@ import uvm_pkg::*;
 `include "top_func_proxy.svh"
 
 
-// ****************************************************************************************************************************
+// *************************************************************************************************
 module ttb;
   import dut_tb_pkg::dut_test;
 
@@ -48,8 +48,15 @@ module ttb;
   wire    [DDR3_DQ_W - 1       : 0]           ddr3_dq;
 
   wire
-      clk_store_sys_clk_out1, clk_store_sys_clk_out2, clk_store_sys_clk_out3, clk_store_sys_clk_out4,
-      clk_store_sys_clk_out5, clk_store_sys_clk_out6, clk_store_sys_clk_out7, proxy_board_master_clk, clk_store_sys_locked;
+      clk_store_sys_clk_out1,
+      clk_store_sys_clk_out2,
+      clk_store_sys_clk_out3,
+      clk_store_sys_clk_out4,
+      clk_store_sys_clk_out5,
+      clk_store_sys_clk_out6,
+      clk_store_sys_clk_out7,
+      proxy_board_master_clk,
+      clk_store_sys_locked;
 
   logic                               proxy_board_pixel_clk;
   logic                               proxy_board_sens_hsync;
@@ -106,66 +113,87 @@ module ttb;
 
   );
 
+  // image histo calculator
+  assign dut_if_h.image_hc_stream_vif.pixel_clk         =   u_ipp.image_histo_calculator.i_pixel_clk;
+  assign dut_if_h.image_hc_stream_vif.frame_number      =   u_ipp.image_histo_calculator.image_s_sens_img_frame_number;
+  assign dut_if_h.image_hc_stream_vif.row_number        =   u_ipp.image_histo_calculator.image_s_sens_img_row_number;
+  assign dut_if_h.image_hc_stream_vif.frame_start       =   u_ipp.image_histo_calculator.image_s_sens_img_frame_start;
+  assign dut_if_h.image_hc_stream_vif.row_start         =   u_ipp.image_histo_calculator.image_s_sens_img_row_start;
+  assign dut_if_h.image_hc_stream_vif.bank_en           =   u_ipp.image_histo_calculator.image_s_sens_img_bank_en;
+  assign dut_if_h.image_hc_stream_vif.bank_we           =   u_ipp.image_histo_calculator.image_s_sens_img_bank_we;
+  assign dut_if_h.image_hc_stream_vif.bank_addr         =   u_ipp.image_histo_calculator.image_s_sens_img_bank_addr;
+  assign dut_if_h.image_hc_stream_vif.bank_din          =   u_ipp.image_histo_calculator.image_s_sens_img_bank_din;
+
 
   // sensor pb if
-  assign proxy_board_pixel_clk                                =   dut_if_h.pb_vif.pixel_clk;
-  assign proxy_board_sens_hsync                               =   dut_if_h.pb_vif.hsync;
-  assign proxy_board_sens_vsync                               =   dut_if_h.pb_vif.vsync;
-  assign proxy_board_sens_pixel                               =   dut_if_h.pb_vif.data;
-  assign dut_if_h.pb_vif.master_clk                           =   proxy_board_master_clk;
-  assign dut_if_h.pb_vif.trigger_out                          =   proxy_board_sens_trigger;
+  assign proxy_board_pixel_clk                          =   dut_if_h.pb_vif.pixel_clk;
+  assign proxy_board_sens_hsync                         =   dut_if_h.pb_vif.hsync;
+  assign proxy_board_sens_vsync                         =   dut_if_h.pb_vif.vsync;
+  assign proxy_board_sens_pixel                         =   dut_if_h.pb_vif.data;
+  assign dut_if_h.pb_vif.master_clk                     =   proxy_board_master_clk;
+  assign dut_if_h.pb_vif.trigger_out                    =   proxy_board_sens_trigger;
 
   // mipi csi axis if
-  assign u_ipp.mipi_csi_axis_tready                           =   dut_if_h.csi_vif.axis_tready;
-  assign dut_if_h.csi_vif.axis_tdata                          =   u_ipp.mipi_csi_axis_tdata;
-  assign dut_if_h.csi_vif.axis_tdest                          =   u_ipp.mipi_csi_axis_tdest;
-  assign dut_if_h.csi_vif.axis_tkeep                          =   u_ipp.mipi_csi_axis_tkeep;
-  assign dut_if_h.csi_vif.axis_tlast                          =   u_ipp.mipi_csi_axis_tlast;
-  assign dut_if_h.csi_vif.axis_tuser                          =   u_ipp.mipi_csi_axis_tuser;
-  assign dut_if_h.csi_vif.axis_tvalid                         =   u_ipp.mipi_csi_axis_tvalid;
+  assign u_ipp.mipi_csi_axis_tready                     =   dut_if_h.csi_vif.axis_tready;
+  assign dut_if_h.csi_vif.axis_tdata                    =   u_ipp.mipi_csi_axis_tdata;
+  assign dut_if_h.csi_vif.axis_tdest                    =   u_ipp.mipi_csi_axis_tdest;
+  assign dut_if_h.csi_vif.axis_tkeep                    =   u_ipp.mipi_csi_axis_tkeep;
+  assign dut_if_h.csi_vif.axis_tlast                    =   u_ipp.mipi_csi_axis_tlast;
+  assign dut_if_h.csi_vif.axis_tuser                    =   u_ipp.mipi_csi_axis_tuser;
+  assign dut_if_h.csi_vif.axis_tvalid                   =   u_ipp.mipi_csi_axis_tvalid;
 
   // core sys rw if
-  assign u_ipp.core_sys_rw_port_smc_rw_req                        =   dut_if_h.core_sys_rw_vif.rw_req;
-  assign u_ipp.core_sys_rw_port_smc_rw_mod                        =   dut_if_h.core_sys_rw_vif.rw_mod;
-  assign u_ipp.core_sys_rw_port_smc_row_base_addr                 =   dut_if_h.core_sys_rw_vif.row_base_addr;
-  assign u_ipp.core_sys_rw_port_smc_bl8_offs                      =   dut_if_h.core_sys_rw_vif.bl8_offs;
-  assign u_ipp.core_sys_rw_port_smc_burst_num                     =   dut_if_h.core_sys_rw_vif.burst_num;
-  assign u_ipp.core_sys_rw_port_smc_burst_size                    =   dut_if_h.core_sys_rw_vif.burst_size;
-  assign dut_if_h.core_sys_rw_vif.rw_bsy                      =   u_ipp.core_sys_rw_port_smc_rw_bsy;
+  assign u_ipp.core_sys_rw_port_smc_rw_req              =   dut_if_h.core_sys_rw_vif.rw_req;
+  assign u_ipp.core_sys_rw_port_smc_rw_mod              =   dut_if_h.core_sys_rw_vif.rw_mod;
+  assign u_ipp.core_sys_rw_port_smc_row_base_addr       =   dut_if_h.core_sys_rw_vif.row_base_addr;
+  assign u_ipp.core_sys_rw_port_smc_bl8_offs            =   dut_if_h.core_sys_rw_vif.bl8_offs;
+  assign u_ipp.core_sys_rw_port_smc_burst_num           =   dut_if_h.core_sys_rw_vif.burst_num;
+  assign u_ipp.core_sys_rw_port_smc_burst_size          =   dut_if_h.core_sys_rw_vif.burst_size;
+  assign dut_if_h.core_sys_rw_vif.rw_bsy                =   u_ipp.core_sys_rw_port_smc_rw_bsy;
 
-  assign u_ipp.core_sys_rw_port_smc_bank_dout                     =   dut_if_h.core_sys_rw_vif.bram_dout;
-  assign dut_if_h.core_sys_rw_vif.bram_addr                   =   u_ipp.core_sys_rw_port_smc_bank_addr;
-  assign dut_if_h.core_sys_rw_vif.bram_din                    =   u_ipp.core_sys_rw_port_smc_bank_din;
-  assign dut_if_h.core_sys_rw_vif.bram_en                     =   u_ipp.core_sys_rw_port_smc_bank_en;
-  assign dut_if_h.core_sys_rw_vif.bram_we                     =   u_ipp.core_sys_rw_port_smc_bank_we;
+  assign u_ipp.core_sys_rw_port_smc_bank_dout           =   dut_if_h.core_sys_rw_vif.bram_dout;
+  assign dut_if_h.core_sys_rw_vif.bram_addr             =   u_ipp.core_sys_rw_port_smc_bank_addr;
+  assign dut_if_h.core_sys_rw_vif.bram_din              =   u_ipp.core_sys_rw_port_smc_bank_din;
+  assign dut_if_h.core_sys_rw_vif.bram_en               =   u_ipp.core_sys_rw_port_smc_bank_en;
+  assign dut_if_h.core_sys_rw_vif.bram_we               =   u_ipp.core_sys_rw_port_smc_bank_we;
 
 
   // sns rd ddr3
-  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_clk                =   u_ipp.sens_streamer.inst.i_sys_clk;
-  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_rw_req             =   u_ipp.sens_streamer.inst.rd_coeff_ddr3_m_smc_rw_req;
-  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_rw_bsy             =   u_ipp.sens_streamer.inst.rd_coeff_ddr3_m_smc_rw_bsy;
-  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_row_base_addr      =   u_ipp.sens_streamer.inst.rd_coeff_ddr3_m_smc_row_base_addr;
-  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_bl8_offs           =   u_ipp.sens_streamer.inst.rd_coeff_ddr3_m_smc_bl8_offs;
-  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_burst_size         =   u_ipp.sens_streamer.inst.rd_coeff_ddr3_m_smc_burst_size;
-  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_burst_num          =   u_ipp.sens_streamer.inst.rd_coeff_ddr3_m_smc_burst_num;
-  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_bram_we            =   u_ipp.bank_store.inst.rd_coeff_ddr3_m_smc_bank_we;
-  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_bram_addr          =   u_ipp.bank_store.inst.rd_coeff_ddr3_m_smc_bank_addr;
-  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_bram_din           =   u_ipp.bank_store.inst.rd_coeff_ddr3_m_smc_bank_din;
+  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_clk =
+    u_ipp.sens_streamer.inst.i_sys_clk;
+  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_rw_req =
+    u_ipp.sens_streamer.inst.rd_coeff_ddr3_m_smc_rw_req;
+  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_rw_bsy =
+    u_ipp.sens_streamer.inst.rd_coeff_ddr3_m_smc_rw_bsy;
+  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_row_base_addr =
+    u_ipp.sens_streamer.inst.rd_coeff_ddr3_m_smc_row_base_addr;
+  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_bl8_offs =
+    u_ipp.sens_streamer.inst.rd_coeff_ddr3_m_smc_bl8_offs;
+  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_burst_size =
+    u_ipp.sens_streamer.inst.rd_coeff_ddr3_m_smc_burst_size;
+  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_burst_num =
+    u_ipp.sens_streamer.inst.rd_coeff_ddr3_m_smc_burst_num;
+  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_bram_we =
+    u_ipp.bank_store.inst.rd_coeff_ddr3_m_smc_bank_we;
+  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_bram_addr =
+    u_ipp.bank_store.inst.rd_coeff_ddr3_m_smc_bank_addr;
+  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_bram_din =
+    u_ipp.bank_store.inst.rd_coeff_ddr3_m_smc_bank_din;
 
 
   // sns rd coeff
-  assign dut_if_h.sns_rd_coeff_vif.i_sensor_pixel_clk         =   u_ipp.sens_streamer.inst.i_sensor_pixel_clk     ;
-  assign dut_if_h.sns_rd_coeff_vif.row_start_sys_clk          =   u_ipp.sens_streamer.inst.row_start              ;
-  assign dut_if_h.sns_rd_coeff_vif.coeff_pixel_valid          =   u_ipp.sens_streamer.inst.coeff_pixel_valid      ;
-  assign dut_if_h.sns_rd_coeff_vif.coeff_ram_addr_b           =   u_ipp.sens_streamer.inst.coeff_bank_addr       ;
-  assign dut_if_h.sns_rd_coeff_vif.coeff_ram_data_b           =   u_ipp.sens_streamer.inst.coeff_ram_data_b       ;
-  assign dut_if_h.sns_rd_coeff_vif.coeff_3_2                  =   u_ipp.sens_streamer.inst.coeff_3_2              ;
-  assign dut_if_h.sns_rd_coeff_vif.coeff_2_1_0                =   u_ipp.sens_streamer.inst.coeff_2_1_0            ;
-  assign dut_if_h.sns_rd_coeff_vif.coeff_0                    =   u_ipp.sens_streamer.inst.coeff_0                ;
-  assign dut_if_h.sns_rd_coeff_vif.coeff_1                    =   u_ipp.sens_streamer.inst.coeff_1                ;
-  assign dut_if_h.sns_rd_coeff_vif.coeff_2                    =   u_ipp.sens_streamer.inst.coeff_2                ;
-  assign dut_if_h.sns_rd_coeff_vif.coeff_a                    =   u_ipp.sens_streamer.inst.coeff_a                ;
-  assign dut_if_h.sns_rd_coeff_vif.coeff_b                    =   u_ipp.sens_streamer.inst.coeff_b                ;
+  assign dut_if_h.sns_rd_coeff_vif.i_sensor_pixel_clk = u_ipp.sens_streamer.inst.i_sensor_pixel_clk;
+  assign dut_if_h.sns_rd_coeff_vif.row_start_sys_clk = u_ipp.sens_streamer.inst.row_start;
+  assign dut_if_h.sns_rd_coeff_vif.coeff_pixel_valid = u_ipp.sens_streamer.inst.coeff_pixel_valid;
+  assign dut_if_h.sns_rd_coeff_vif.coeff_ram_addr_b = u_ipp.sens_streamer.inst.coeff_bank_addr;
+  assign dut_if_h.sns_rd_coeff_vif.coeff_ram_data_b = u_ipp.sens_streamer.inst.coeff_ram_data_b;
+  assign dut_if_h.sns_rd_coeff_vif.coeff_3_2 = u_ipp.sens_streamer.inst.coeff_3_2;
+  assign dut_if_h.sns_rd_coeff_vif.coeff_2_1_0 = u_ipp.sens_streamer.inst.coeff_2_1_0;
+  assign dut_if_h.sns_rd_coeff_vif.coeff_0 = u_ipp.sens_streamer.inst.coeff_0;
+  assign dut_if_h.sns_rd_coeff_vif.coeff_1 = u_ipp.sens_streamer.inst.coeff_1;
+  assign dut_if_h.sns_rd_coeff_vif.coeff_2 = u_ipp.sens_streamer.inst.coeff_2;
+  assign dut_if_h.sns_rd_coeff_vif.coeff_a = u_ipp.sens_streamer.inst.coeff_a;
+  assign dut_if_h.sns_rd_coeff_vif.coeff_b = u_ipp.sens_streamer.inst.coeff_b;
 
 
 oct640_cu_clk_store_sys_0 clk_store_sys (
@@ -183,6 +211,7 @@ oct640_cu_clk_store_sys_0 clk_store_sys (
 
 image_processing_pipeline_imp_PQRLL2 u_ipp (
   .bba(),
+  .coeff_table_idx_ratio(),
   .coeff_table_ddr3_base_addr(dut_if_h.sys_vif.coeff_table_ddr3_base_addr),
   .core_sys_rw_port_smc_bank_addr(),
   .core_sys_rw_port_smc_bank_din(),
@@ -269,4 +298,4 @@ wire ddr3_ck_p_1 = ddr3_ck_p;
   );
 
 endmodule
-// ****************************************************************************************************************************
+// *************************************************************************************************

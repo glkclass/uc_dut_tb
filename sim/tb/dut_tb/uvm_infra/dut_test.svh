@@ -1,13 +1,14 @@
-/******************************************************************************************************************************
+/***************************************************************************************************
     Project         :   AM
     Date            :   June 2025
     Class           :   dut_test
-    Description     :   Create dutb flat infrastructure: set of agents and scorebords on the same level of hierarchy and connections between them.
+    Description     :   Create dutb flat infrastructure: set of agents and scorebords
+                        on the same level of hierarchy and connections between them.
                         Specific test behaviour should be defined in child classes.
-******************************************************************************************************************************/
+***************************************************************************************************/
 
 
-// ****************************************************************************************************************************
+// *************************************************************************************************
 class dut_test extends dutb_test_base #(.N_AGNT(agnt.num()), .N_SCB(1));
     `uvm_component_utils(dut_test)
 
@@ -19,10 +20,10 @@ class dut_test extends dutb_test_base #(.N_AGNT(agnt.num()), .N_SCB(1));
     extern task                 run_base_test_seq();
 
 endclass
-// ****************************************************************************************************************************
+// *************************************************************************************************
 
 
-// ****************************************************************************************************************************
+// *************************************************************************************************
 function dut_test::new(string name = "dut_test", uvm_component parent = null);
     super.new(name, parent);
 endfunction
@@ -44,6 +45,7 @@ function void dut_test::build_phase(uvm_phase phase);
     dutb_txn_base::type_id::set_inst_override(sns_rd_ddr3_txn::get_type(), `DUTB_AGNT(SNS_RD_DDR3));
     dutb_txn_base::type_id::set_inst_override(sns_rd_coeff_txn::get_type(), `DUTB_AGNT(SNS_RD_COEFF));
     dutb_txn_base::type_id::set_inst_override(proxy_board_trigger_txn::get_type(), `DUTB_AGNT(PROXY_BOARD_TRIGGER));
+    dutb_txn_base::type_id::set_inst_override(image_hc_stream_txn::get_type(), `DUTB_AGNT(IMAGE_HC_STREAM));
 
     factory.print();
 
@@ -85,7 +87,7 @@ function void dut_test::start_of_simulation_phase(uvm_phase phase);
 endfunction
 
 /*  These 'base' sequences always run so we put them into separate task.
-The task should be called inside the top dut_test together with spesific sequences   */
+The task should be called inside the top dut_test together with specific sequences   */
 task dut_test::run_base_test_seq();
     dutb_txn_seq #(init_ips_txn) init_ips_seq_h = new("init_ips_seq_h");
     dutb_txn_seq #(init_ddr3_txn) init_ddr3_seq_h = new("init_ddr3_seq_h");
@@ -122,4 +124,4 @@ endtask
 //     phase.drop_objection(this, "dut_test finished");
 // endtask
 
-// ****************************************************************************************************************************
+// *************************************************************************************************
