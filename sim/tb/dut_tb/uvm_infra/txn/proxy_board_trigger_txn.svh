@@ -64,7 +64,7 @@ endfunction
 
 task proxy_board_trigger_txn::generate_trigger();
 
-    `uvm_debug($sformatf("triger_num: %d, trigger_len: %d", trigger_num, trigger_len))
+    `uvm_info_d($sformatf("triger_num: %d, trigger_len: %d", trigger_num, trigger_len))
 
     if (0 == trigger_num)
         begin
@@ -88,7 +88,7 @@ endtask
 
 
 task proxy_board_trigger_txn::drive(input dutb_if_proxy_base dutb_if);
-    // `uvm_debug("Run driver")
+    // `uvm_info_d("Run driver")
     `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
     dut_vif = dut_if_h.dut_vif;
     pb_vif = dut_if_h.dut_vif.pb_vif;
@@ -101,7 +101,7 @@ endtask
 
 
 task proxy_board_trigger_txn::monitor(input dutb_if_proxy_base dutb_if);
-    // `uvm_debug("Run monitor")
+    // `uvm_info_d("Run monitor")
     `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
     dut_vif = dut_if_h.dut_vif;
     pb_vif = dut_if_h.dut_vif.pb_vif;

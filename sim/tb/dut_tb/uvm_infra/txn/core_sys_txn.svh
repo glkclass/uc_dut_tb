@@ -68,7 +68,7 @@ task core_sys_txn::generate_wr_request();
             @(posedge dut_vif.sys_clk);
             cs_vif.row_base_addr = `DDR3_MEMORY_CYCLIC_COEFF_TABLE_BASE_ADDR / `DDR3_LINE_SIZE + 2 * n_row;
             n_row++;
-            `uvm_debug_txn($sformatf("core sys rw_req for addr: %d", cs_vif.row_base_addr))
+            `uvm_info_d($sformatf("core sys rw_req for addr: %d", cs_vif.row_base_addr))
 
             cs_vif.bl8_offs = 0;
             cs_vif.burst_num = 0;
@@ -105,7 +105,7 @@ task core_sys_txn::provide_bram_response();
             coeffs[3 * i + 1] = coeff_a_b[31 : 16];
             coeffs[3 * i + 2] = coeff_a_b[47 : 32];
 
-            `uvm_debug_txn($sformatf("provide_bram_response: %d 0x%08X 0x%08X 0x%04X 0x%04X 0x%04X", i, coeff_a, coeff_b, coeffs[3 * i], coeffs[3 * i + 1], coeffs[3 * i + 2]))
+            `uvm_info_d($sformatf("provide_bram_response: %d 0x%08X 0x%08X 0x%04X 0x%04X 0x%04X", i, coeff_a, coeff_b, coeffs[3 * i], coeffs[3 * i + 1], coeffs[3 * i + 2]))
         end
 
 
@@ -114,14 +114,14 @@ task core_sys_txn::provide_bram_response();
         begin
             @(posedge dut_vif.sys_clk iff cs_vif.bram_en);
             cs_vif.bram_dout = {coeffs[4 * i + 3], coeffs[4 * i + 2], coeffs[4 * i + 1], coeffs[4 * i]};
-            `uvm_debug_txn($sformatf("provide_bram_response: %d 0x%016X", i, cs_vif.bram_dout))
+            `uvm_info_d($sformatf("provide_bram_response: %d 0x%016X", i, cs_vif.bram_dout))
             i++;
         end
 endtask
 
 
 task core_sys_txn::drive(input dutb_if_proxy_base dutb_if);
-    // `uvm_debug("Run driver")
+    // `uvm_info_d("Run driver")
     `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
     dut_vif = dut_if_h.dut_vif;
     cs_vif = dut_if_h.dut_vif.core_sys_rw_vif;
@@ -135,7 +135,7 @@ task core_sys_txn::drive(input dutb_if_proxy_base dutb_if);
         provide_bram_response();
         begin
             @(negedge dut_vif.sys_clk iff cs_vif.rw_bsy);
-            // `uvm_debug($sformatf("core sys wrrsp for addr: %d", cs_vif.start_row_addr))
+            // `uvm_info_d($sformatf("core sys wrrsp for addr: %d", cs_vif.start_row_addr))
             #10us;
         end
     join_any disable fork;
@@ -144,7 +144,7 @@ endtask
 
 
 task core_sys_txn::monitor(input dutb_if_proxy_base dutb_if);
-    // `uvm_debug("Run monitor")
+    // `uvm_info_d("Run monitor")
     `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
     dut_vif = dut_if_h.dut_vif;
     cs_vif = dut_if_h.dut_vif.core_sys_rw_vif;

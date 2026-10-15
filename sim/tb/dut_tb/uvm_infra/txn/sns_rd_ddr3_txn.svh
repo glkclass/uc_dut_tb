@@ -54,24 +54,24 @@ endfunction
 
 task sns_rd_ddr3_txn::check_rd_ddr3_txn();
     @(posedge vif.rd_coeff_rw_req);
-    `uvm_debug_txn($sformatf("verbosity_level: %d", verbosity_level))
-    `uvm_debug_txn($sformatf("rdreq for addr: %d", vif.rd_coeff_row_base_addr))
+    // `uvm_info_d($sformatf("verbosity_level: %d", verbosity_level))
+    `uvm_info_d($sformatf("rdreq for addr: %d", vif.rd_coeff_row_base_addr))
     fork
         forever
             begin
                 @(posedge vif.rd_coeff_clk iff vif.rd_coeff_bram_we);
-                `uvm_debug_txn($sformatf("rd addr & data: %d 0x%016X", vif.rd_coeff_row_base_addr, vif.rd_coeff_bram_din))
+                `uvm_info_d($sformatf("rd addr & data: %d 0x%016X", vif.rd_coeff_row_base_addr, vif.rd_coeff_bram_din))
             end
 
         @(negedge vif.rd_coeff_rw_bsy)
-        `uvm_debug_txn($sformatf("rdbusy for addr: %d", vif.rd_coeff_row_base_addr))
+        `uvm_info_d($sformatf("rdbusy for addr: %d", vif.rd_coeff_row_base_addr))
     join_any disable fork;
 
 endtask
 
 
 task sns_rd_ddr3_txn::monitor(input dutb_if_proxy_base dutb_if);
-    // `uvm_debug_txn("Run monitor")
+    `uvm_info_d("Run monitor")
     `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
     dut_vif = dut_if_h.dut_vif;
     vif = dut_if_h.dut_vif.sns_rd_ddr3_vif;

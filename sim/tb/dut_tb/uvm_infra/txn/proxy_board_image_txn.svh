@@ -112,7 +112,7 @@ endtask
 
 
 task proxy_board_image_txn::drive(input dutb_if_proxy_base dutb_if);
-    // `uvm_debug("Run driver")
+    // `uvm_info_d("Run driver")
     `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
     dut_vif = dut_if_h.dut_vif;
     pb_vif = dut_if_h.dut_vif.pb_vif;
@@ -143,7 +143,7 @@ endtask
 
 
 task proxy_board_image_txn::monitor(input dutb_if_proxy_base dutb_if);
-    // `uvm_debug("Run monitor")
+    // `uvm_info_d("Run monitor")
     `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
     dut_vif = dut_if_h.dut_vif;
     pb_vif = dut_if_h.dut_vif.pb_vif;

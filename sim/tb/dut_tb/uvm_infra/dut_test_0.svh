@@ -32,6 +32,7 @@ endfunction
 
 function void dut_test_0::start_of_simulation_phase(uvm_phase phase);
   super.start_of_simulation_phase(phase);
+  this.env_h.agent_h[IMAGE_HC_STREAM].monitor_h.set_report_verbosity_level(UVM_FULL);
 endfunction
 
 

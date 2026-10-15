@@ -76,14 +76,8 @@ endfunction
 
 
 function void dut_test::start_of_simulation_phase(uvm_phase phase);
-    uvm_top.print_topology();
-
-    for (int i = 0; i < agnt.num(); i++)
-        begin
-            this.env_h.agent_h[i].set_report_verbosity_level_hier(UVM_DEBUG);
-        end
-
     super.start_of_simulation_phase(phase);
+    uvm_top.print_topology();
 endfunction
 
 /*  These 'base' sequences always run so we put them into separate task.

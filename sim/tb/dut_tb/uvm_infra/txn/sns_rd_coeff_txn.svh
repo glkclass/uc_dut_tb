@@ -54,12 +54,12 @@ task sns_rd_coeff_txn::check_rd_coeff();
         forever
             begin
                 @(posedge vif.i_sensor_pixel_clk iff vif.coeff_pixel_valid);
-                `uvm_debug_txn($sformatf("sns rd coeff: 0x%016X %d %d", vif.coeff_ram_data_b, vif.coeff_a, vif.coeff_b))
+                `uvm_info_d($sformatf("sns rd coeff: 0x%016X %d %d", vif.coeff_ram_data_b, vif.coeff_a, vif.coeff_b))
             end
 
             begin
                 @(posedge vif.row_start_sys_clk);
-                `uvm_debug_txn("sns row start")
+                `uvm_info_d("sns row start")
             end
     join_any disable fork;
 
@@ -67,7 +67,7 @@ endtask
 
 
 task sns_rd_coeff_txn::monitor(input dutb_if_proxy_base dutb_if);
-    // `uvm_debug("Run monitor")
+    // `uvm_info_d("Run monitor")
     `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
     dut_vif = dut_if_h.dut_vif;
     vif = dut_if_h.dut_vif.sns_rd_coeff_vif;

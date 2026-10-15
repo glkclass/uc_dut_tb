@@ -90,7 +90,7 @@ task mipi_csi_axis_txn::recieve_image();
                         begin
                             if (csi_vif.axis_frame_start)
                                 begin
-                                    `uvm_debug_txn($sformatf("frame_start %d", csi_vif.axis_frame_start));
+                                    `uvm_info_f($sformatf("frame_start %d", csi_vif.axis_frame_start));
 
                                     assert (1 == csi_vif.mipi_csi_row_number) else `uvm_fatal("MNTR", $sformatf("mipi_csi_row_number = %d", csi_vif.mipi_csi_row_number));
                                     assert (0 == n_image_col) else `uvm_fatal("MNTR", $sformatf("Image col = %d", n_image_col));
@@ -101,13 +101,13 @@ task mipi_csi_axis_txn::recieve_image();
                             assert(n_image_row < N_IMAGE_ROW) else `uvm_fatal("MNTR", $sformatf("Image row = %d", n_image_row));
                             assert(n_image_col < N_IMAGE_COL) else `uvm_fatal("MNTR", $sformatf("Image col = %d", n_image_col));
                             assert(n_image_row == n_image_row_d + 1) else `uvm_fatal("MNTR", $sformatf("Image row previous, current = %d, %d", n_image_row_d, n_image_row));
-                            `uvm_debug_txn($sformatf("Image row/col/data = %02d / %02d / 0x%04h / 0x%04h / 0x%04h / 0x%04h", n_image_row, n_image_col, csi_vif.axis_tword[0], csi_vif.axis_tword[1], csi_vif.axis_tword[2], csi_vif.axis_tword[3]));
+                            `uvm_info_f($sformatf("Image row/col/data = %02d / %02d / 0x%04h / 0x%04h / 0x%04h / 0x%04h", n_image_row, n_image_col, csi_vif.axis_tword[0], csi_vif.axis_tword[1], csi_vif.axis_tword[2], csi_vif.axis_tword[3]));
                             for (int i = 0; i < 4; i++) image[n_image_row][n_image_col + i] = csi_vif.axis_tword[i];
                             n_image_col += 4;
 
                             if (csi_vif.axis_tlast)
                                 begin
-                                    `uvm_debug_txn($sformatf("axis_tlast %d", csi_vif.axis_tlast));
+                                    `uvm_info_f($sformatf("axis_tlast %d", csi_vif.axis_tlast));
                                     assert (N_IMAGE_COL== n_image_col) else `uvm_fatal("MNTR", $sformatf("Image col = %d", n_image_col));
                                     n_image_col = 0;
                                     frame_recieved = ((N_IMAGE_ROW - 1) == n_image_row) ? 1'b1: 1'b0;
@@ -122,7 +122,7 @@ endtask
 
 task mipi_csi_axis_txn::monitor(input dutb_if_proxy_base dutb_if);
     u_shortint frame_number_d;
-    // `uvm_debug("Run monitor")
+    // `uvm_info_d("Run monitor")
     `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
     dut_vif = dut_if_h.dut_vif;
     csi_vif = dut_if_h.dut_vif.csi_vif;

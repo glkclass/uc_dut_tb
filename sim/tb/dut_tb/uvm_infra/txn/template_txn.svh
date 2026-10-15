@@ -52,7 +52,7 @@ task template_txn::drive(input dutb_if_proxy_base dutb_if);
     `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
     dut_vif = dut_if_h.dut_vif;
     wait (dut_vif.rst_n) #0;
-    `uvm_debug("Run driver")
+    `uvm_info_d("Run driver")
 endtask
 
 
@@ -61,6 +61,6 @@ task template_txn::monitor(input dutb_if_proxy_base dutb_if);
     dut_vif = dut_if_h.dut_vif;
 
     wait (dut_vif.rst_n) #0;
-    `uvm_debug("Run monitor")
+    `uvm_info_d("Run monitor")
 endtask
 // ****************************************************************************************************************************

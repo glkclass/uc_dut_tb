@@ -30,7 +30,7 @@ endfunction
 task `TXN_NAME::drive(input dutb_if_proxy_base dutb_if);
     `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
 
-    `uvm_debug("Init DDR3 ram")
+    `uvm_info_d("Init DDR3 ram")
     // dut_if_h.top_func_proxy.ddr3_memory_write(0,0,0,0);
 
     // // init coeffs
@@ -56,7 +56,7 @@ endtask
                         begin\
                             bl8 = {16'(rnd_func``()), 16'(rnd_func``()), 16'(rnd_func``()), 16'(rnd_func``()), 16'(rnd_func``()), 16'(rnd_func``()), 16'(rnd_func``()), 16'(rnd_func``())};\
                             // memory_write (bank, row, col, data);\
-                            // `uvm_debug($sformatf("%s row_col_val: %04d_%04d_0x%032X", `"name`", row, col, bl8))\
+                            // `uvm_info_d($sformatf("%s row_col_val: %04d_%04d_0x%032X", `"name`", row, col, bl8))\
                             u_ram.memory_write(0, row, col, bl8);\
                         end\
                 end\
@@ -102,7 +102,7 @@ endtask
                                     bl8 = bl8_0;\
                                 end\
                             // memory_write (bank, row, col, data);\
-                            // `uvm_debug($sformatf("%s row_col_val: %04d_%04d_0x%032X", `"name`", row, col, bl8))\
+                            // `uvm_info_d($sformatf("%s row_col_val: %04d_%04d_0x%032X", `"name`", row, col, bl8))\
                             u_ram.memory_write(0, row, col, bl8);\
                         end\
                 end\

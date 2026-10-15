@@ -45,7 +45,7 @@ task axis_image_txn::monitor(input dutb_if_proxy_base dutb_if);
 
     @(posedge pb_vif.v_sync);
     image_counter++;
-    `uvm_debug($sformatf("Received txn: %d", image_counter))
+    `uvm_info_d($sformatf("Received txn: %d", image_counter))
 endtask
 
 // ****************************************************************************************************************************

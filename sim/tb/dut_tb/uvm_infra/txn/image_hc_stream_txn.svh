@@ -19,7 +19,7 @@ class `TXN_NAME extends dutb_txn_base;
 
     static  integer n_row = 0;
 
-    extern function                             new (string name = `STR(`TXN_NAME));
+    extern function                             new (string name = `STR(`TXN_NAME), uvm_component parent = null);
     extern virtual  function vector_t           pack2vector ();
     extern virtual  function void               unpack4vector (vector_t packed_txn);
 
@@ -33,8 +33,8 @@ endclass
 
 
 // *************************************************************************************************
-function `TXN_NAME::new(string name = `STR(`TXN_NAME));
-    super.new(name);
+function `TXN_NAME::new(string name = `STR(`TXN_NAME), uvm_component parent = null);
+    super.new(name, parent);
 endfunction
 
 
@@ -56,12 +56,12 @@ task `TXN_NAME::check_input();
         forever
             begin
                 @(posedge vif.pixel_clk iff vif.frame_start);
-                `uvm_debug($sformatf("Image HS frame recieved"))
+                `uvm_txn_info_h($sformatf("Image HC frame recieved"))
             end
 
             begin
                 @(posedge vif.pixel_clk iff vif.row_start );
-                `uvm_debug_txn("Image HS line recieved")
+                `uvm_txn_info_f("Image HC line recieved")
             end
     join_any disable fork;
 
@@ -69,7 +69,7 @@ endtask
 
 
 task `TXN_NAME::monitor(input dutb_if_proxy_base dutb_if);
-    // `uvm_debug("Run monitor")
+    `uvm_info_d("Run monitor")
     `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
     dut_vif = dut_if_h.dut_vif;
     vif = dut_if_h.dut_vif.image_hc_stream_vif;
