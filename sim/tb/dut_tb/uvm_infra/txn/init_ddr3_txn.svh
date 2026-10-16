@@ -14,8 +14,8 @@ class `TXN_NAME extends dutb_txn_base;
 
     dut_if_proxy dut_if_h;
     extern function                         new             (string name = `STR(`TXN_NAME));
-    extern virtual  task                    drive           (input dutb_if_proxy_base dutb_if);
-    // extern virtual  task                    monitor                 (input dutb_if_proxy_base dutb_if);
+    extern virtual  task                    drive           (input dutb_if_proxy_base dutb_if_proxy_h);
+    // extern virtual  task                    monitor                 (input dutb_if_proxy_base dutb_if_proxy_h);
 endclass
 // ****************************************************************************************************************************
 
@@ -27,10 +27,10 @@ function `TXN_NAME::new(string name = `STR(`TXN_NAME));
 endfunction
 
 
-task `TXN_NAME::drive(input dutb_if_proxy_base dutb_if);
-    `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
+task `TXN_NAME::drive(input dutb_if_proxy_base dutb_if_proxy_h);
+    `ASSERT_TYPE_CAST(dut_if_h, dutb_if_proxy_h)
 
-    `uvm_info_d("Init DDR3 ram")
+    `uvm_info_d("INF", "Init DDR3 ram")
     // dut_if_h.top_func_proxy.ddr3_memory_write(0,0,0,0);
 
     // // init coeffs

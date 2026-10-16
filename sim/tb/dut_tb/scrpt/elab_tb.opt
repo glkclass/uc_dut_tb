@@ -3,6 +3,7 @@
 --mt 8
 --debug typical
 --timescale 1ps/1ps
+-L UVM
 -L secureip
 -L simprims_ver
 -L dutb=${DUTB_LIB_FOLDER}

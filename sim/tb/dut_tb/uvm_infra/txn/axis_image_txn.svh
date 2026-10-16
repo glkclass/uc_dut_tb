@@ -39,11 +39,11 @@ endfunction
 task axis_image_txn::monitor(input dutb_if_proxy_base dutb_if);
     `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
     dut_vif = dut_if_h.dut_vif;
-    pb_vif =  dut_if_h.dut_vif.pb_vif;
+    pb_vif =  dut_if_h.pb_vif;
 
     wait (dut_vif.rst_n) #0;   // wait for reset off
 
-    @(posedge pb_vif.v_sync);
+    @(posedge pb_vif.proxy_board_sens_vsync);
     image_counter++;
     `uvm_info_d($sformatf("Received txn: %d", image_counter))
 endtask

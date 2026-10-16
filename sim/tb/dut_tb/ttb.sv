@@ -8,8 +8,10 @@
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 
+`include "dut_tb_macros.svh"
 `include "top_func_proxy.svh"
 
+`default_nettype none
 
 // *************************************************************************************************
 module ttb;
@@ -29,23 +31,8 @@ module ttb;
 
 
 // wires
-  wire                                        rst_n, ddr_initilaized, board_clk;
-
-  wire                                        ddr3_reset_n;
-  wire                                        ddr3_ck_p;
-  wire                                        ddr3_ck_n;
-  wire                                        ddr3_odt;
-  wire                                        ddr3_cke;
-  wire                                        ddr3_cs_n = 1'b0;
-  wire                                        ddr3_ras_n;
-  wire                                        ddr3_cas_n;
-  wire                                        ddr3_we_n;
-  wire    [DDR3_BANK_W - 1     : 0]           ddr3_ba;
-  wire    [DDR3_ROW_W - 1      : 0]           ddr3_addr;
-  wire    [DDR3_DM_W - 1       : 0]           ddr3_dm;
-  wire    [DDR3_DM_W - 1       : 0]           ddr3_dqs_p;
-  wire    [DDR3_DM_W - 1       : 0]           ddr3_dqs_n;
-  wire    [DDR3_DQ_W - 1       : 0]           ddr3_dq;
+  wire
+    rst_n, ddr_initilaized, board_clk;
 
   wire
       clk_store_sys_clk_out1,
@@ -55,18 +42,13 @@ module ttb;
       clk_store_sys_clk_out5,
       clk_store_sys_clk_out6,
       clk_store_sys_clk_out7,
-      proxy_board_master_clk,
       clk_store_sys_locked;
 
-  logic                               proxy_board_pixel_clk;
-  logic                               proxy_board_sens_hsync;
-  logic                               proxy_board_sens_vsync;
-  logic [IMAGE_PIXEL_W - 1    :   0]           proxy_board_sens_pixel;
-  logic                               proxy_board_sens_trigger;
   logic                               sensor_sck;
   logic                               sensor_cs_n;
   logic                               sensor_mosi;
 
+// main
 
   // Setup env and start
   initial begin
@@ -82,7 +64,30 @@ module ttb;
       `uvm_info("TTB", $sformatf("Max test length: %0d ns", test_length_ns), UVM_HIGH)
 
       // Provide DUT interfaces to UVM infra
-      uvm_config_db #(virtual dut_if)::set(null, "uvm_test_top", "dut_vif", dut_if_h);
+      uvm_config_db #(virtual image_hc_if)::set(
+        null, "uvm_test_top.env_h*", "dut_image_hc_vif", `IMAGE_HC_PATH(image_hc_bind_if));
+      uvm_config_db #(virtual sns_rd_coeff_if)::set(
+        null, "uvm_test_top.env_h*", "sns_rd_coeff_vif", `SENS_STREAMER_PATH(sns_rd_coeff_bind_if));
+      uvm_config_db #(virtual sns_rd_ddr3_if)::set(
+        null, "uvm_test_top.env_h*", "sns_rd_ddr3_vif", `SENS_STREAMER_PATH(sns_rd_ddr3_bind_if));
+      uvm_config_db #(virtual sns_rd_ddr3_bram_if)::set(
+        null, "uvm_test_top.env_h*", "sns_rd_ddr3_bram_vif", `BANK_STORE_PATH(sns_rd_ddr3_bram_bind_if));
+      uvm_config_db #(virtual pb_if)::set(
+        null, "uvm_test_top.env_h*", "pb_vif", `IPP_PATH(pb_bind_if));
+      uvm_config_db #(virtual sys_if)::set(
+        null, "uvm_test_top.env_h*", "sys_vif", `IPP_PATH(sys_bind_if));
+      uvm_config_db #(virtual sm_core_rw_if)::set(
+        null, "uvm_test_top.env_h*", "core_sys_rw_vif", `IPP_PATH(core_sys_rw_bind_if));
+      uvm_config_db #(virtual axis_if)::set(
+        null, "uvm_test_top.env_h*", "axis_vif", `IPP_PATH(axis_bind_if));
+      uvm_config_db #(virtual uvc_if)::set(
+        null, "uvm_test_top.env_h*", "uvc_vif", `IPP_PATH(uvc_bind_if));
+      uvm_config_db #(virtual histo_bram_if)::set(
+        null, "uvm_test_top.env_h*", "histo_bram_0_vif", `HISTO_BRAM_PATH(0, histo_bram_bind_if));
+      uvm_config_db #(virtual histo_bram_if)::set(
+        null, "uvm_test_top.env_h*", "histo_bram_1_vif", `HISTO_BRAM_PATH(1, histo_bram_bind_if));
+
+      uvm_config_db #(virtual dut_if)::set(null, "uvm_test_top.env_h*", "dut_vif", dut_if_h);
 
       // Start test
       fork
@@ -110,192 +115,85 @@ module ttb;
   dut_if  dut_if_h(           .rst_n(rst_n),
                               .ddr_initilaized(ddr_initilaized),
                               .sys_clk(clk_store_sys_clk_out2)
-
   );
 
-  // image histo calculator
-  assign dut_if_h.image_hc_stream_vif.pixel_clk         =   u_ipp.image_histo_calculator.i_pixel_clk;
-  assign dut_if_h.image_hc_stream_vif.frame_number      =   u_ipp.image_histo_calculator.image_s_sens_img_frame_number;
-  assign dut_if_h.image_hc_stream_vif.row_number        =   u_ipp.image_histo_calculator.image_s_sens_img_row_number;
-  assign dut_if_h.image_hc_stream_vif.frame_start       =   u_ipp.image_histo_calculator.image_s_sens_img_frame_start;
-  assign dut_if_h.image_hc_stream_vif.row_start         =   u_ipp.image_histo_calculator.image_s_sens_img_row_start;
-  assign dut_if_h.image_hc_stream_vif.bank_en           =   u_ipp.image_histo_calculator.image_s_sens_img_bank_en;
-  assign dut_if_h.image_hc_stream_vif.bank_we           =   u_ipp.image_histo_calculator.image_s_sens_img_bank_we;
-  assign dut_if_h.image_hc_stream_vif.bank_addr         =   u_ipp.image_histo_calculator.image_s_sens_img_bank_addr;
-  assign dut_if_h.image_hc_stream_vif.bank_din          =   u_ipp.image_histo_calculator.image_s_sens_img_bank_din;
+  // ddr3 bus
+  ddr3_if ddr3_bus();
 
 
-  // sensor pb if
-  assign proxy_board_pixel_clk                          =   dut_if_h.pb_vif.pixel_clk;
-  assign proxy_board_sens_hsync                         =   dut_if_h.pb_vif.hsync;
-  assign proxy_board_sens_vsync                         =   dut_if_h.pb_vif.vsync;
-  assign proxy_board_sens_pixel                         =   dut_if_h.pb_vif.data;
-  assign dut_if_h.pb_vif.master_clk                     =   proxy_board_master_clk;
-  assign dut_if_h.pb_vif.trigger_out                    =   proxy_board_sens_trigger;
+  bind image_histo_calculator image_hc_if image_hc_bind_if (.*);
+  bind sens_streamer sns_rd_coeff_if sns_rd_coeff_bind_if (.*);
+  bind sens_streamer sns_rd_ddr3_if sns_rd_ddr3_bind_if (.*);
+  bind bank_store sns_rd_ddr3_bram_if sns_rd_ddr3_bram_bind_if (.*);
+  bind image_processing_pipeline_imp_PQRLL2 pb_if pb_bind_if (.*);
+  bind image_processing_pipeline_imp_PQRLL2 sys_if sys_bind_if (.*);
+  bind image_processing_pipeline_imp_PQRLL2 sm_core_rw_if core_sys_rw_bind_if (.*);
+  bind image_processing_pipeline_imp_PQRLL2 axis_if axis_bind_if (.*);
+  bind image_processing_pipeline_imp_PQRLL2 uvc_if uvc_bind_if (.*);
+  bind `HISTO_BRAM_UNIT(0) histo_bram_if histo_bram_bind_if(.*);
+  bind `HISTO_BRAM_UNIT(1) histo_bram_if histo_bram_bind_if(.*);
 
-  // mipi csi axis if
-  assign u_ipp.mipi_csi_axis_tready                     =   dut_if_h.csi_vif.axis_tready;
-  assign dut_if_h.csi_vif.axis_tdata                    =   u_ipp.mipi_csi_axis_tdata;
-  assign dut_if_h.csi_vif.axis_tdest                    =   u_ipp.mipi_csi_axis_tdest;
-  assign dut_if_h.csi_vif.axis_tkeep                    =   u_ipp.mipi_csi_axis_tkeep;
-  assign dut_if_h.csi_vif.axis_tlast                    =   u_ipp.mipi_csi_axis_tlast;
-  assign dut_if_h.csi_vif.axis_tuser                    =   u_ipp.mipi_csi_axis_tuser;
-  assign dut_if_h.csi_vif.axis_tvalid                   =   u_ipp.mipi_csi_axis_tvalid;
-
-  // core sys rw if
-  assign u_ipp.core_sys_rw_port_smc_rw_req              =   dut_if_h.core_sys_rw_vif.rw_req;
-  assign u_ipp.core_sys_rw_port_smc_rw_mod              =   dut_if_h.core_sys_rw_vif.rw_mod;
-  assign u_ipp.core_sys_rw_port_smc_row_base_addr       =   dut_if_h.core_sys_rw_vif.row_base_addr;
-  assign u_ipp.core_sys_rw_port_smc_bl8_offs            =   dut_if_h.core_sys_rw_vif.bl8_offs;
-  assign u_ipp.core_sys_rw_port_smc_burst_num           =   dut_if_h.core_sys_rw_vif.burst_num;
-  assign u_ipp.core_sys_rw_port_smc_burst_size          =   dut_if_h.core_sys_rw_vif.burst_size;
-  assign dut_if_h.core_sys_rw_vif.rw_bsy                =   u_ipp.core_sys_rw_port_smc_rw_bsy;
-
-  assign u_ipp.core_sys_rw_port_smc_bank_dout           =   dut_if_h.core_sys_rw_vif.bram_dout;
-  assign dut_if_h.core_sys_rw_vif.bram_addr             =   u_ipp.core_sys_rw_port_smc_bank_addr;
-  assign dut_if_h.core_sys_rw_vif.bram_din              =   u_ipp.core_sys_rw_port_smc_bank_din;
-  assign dut_if_h.core_sys_rw_vif.bram_en               =   u_ipp.core_sys_rw_port_smc_bank_en;
-  assign dut_if_h.core_sys_rw_vif.bram_we               =   u_ipp.core_sys_rw_port_smc_bank_we;
+  oct640_cu_clk_store_sys_0 clk_store_sys (
+    .clk_in1(board_clk),
+    .clk_out1(clk_store_sys_clk_out1),
+    .clk_out2(clk_store_sys_clk_out2),
+    .clk_out3(clk_store_sys_clk_out3),
+    .clk_out4(clk_store_sys_clk_out4),
+    .clk_out5(clk_store_sys_clk_out5),
+    .clk_out6(clk_store_sys_clk_out6),
+    .clk_out7(clk_store_sys_clk_out7),
+    .locked(clk_store_sys_locked)
+  );
 
 
-  // sns rd ddr3
-  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_clk =
-    u_ipp.sens_streamer.inst.i_sys_clk;
-  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_rw_req =
-    u_ipp.sens_streamer.inst.rd_coeff_ddr3_m_smc_rw_req;
-  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_rw_bsy =
-    u_ipp.sens_streamer.inst.rd_coeff_ddr3_m_smc_rw_bsy;
-  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_row_base_addr =
-    u_ipp.sens_streamer.inst.rd_coeff_ddr3_m_smc_row_base_addr;
-  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_bl8_offs =
-    u_ipp.sens_streamer.inst.rd_coeff_ddr3_m_smc_bl8_offs;
-  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_burst_size =
-    u_ipp.sens_streamer.inst.rd_coeff_ddr3_m_smc_burst_size;
-  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_burst_num =
-    u_ipp.sens_streamer.inst.rd_coeff_ddr3_m_smc_burst_num;
-  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_bram_we =
-    u_ipp.bank_store.inst.rd_coeff_ddr3_m_smc_bank_we;
-  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_bram_addr =
-    u_ipp.bank_store.inst.rd_coeff_ddr3_m_smc_bank_addr;
-  assign dut_if_h.sns_rd_ddr3_vif.rd_coeff_bram_din =
-    u_ipp.bank_store.inst.rd_coeff_ddr3_m_smc_bank_din;
+  image_processing_pipeline_imp_PQRLL2 u_ipp (
+    .sys_rst_n(rst_n),
+    .ref_clk(clk_store_sys_clk_out1),
+    .sys_clk(clk_store_sys_clk_out2),
+    .sys_135_clk(clk_store_sys_clk_out3),
+    .ddr_clk(clk_store_sys_clk_out4),
+    .ddr_270_clk(clk_store_sys_clk_out5),
+    .fr30_clk(clk_store_sys_clk_out6),
+    .fr60_clk(clk_store_sys_clk_out7),
 
+    .ddr3_addr(ddr3_bus.addr),
+    .ddr3_ba(ddr3_bus.ba),
+    .ddr3_cas_n(ddr3_bus.cas_n),
+    .ddr3_ck_n(ddr3_bus.ck_n),
+    .ddr3_ck_p(ddr3_bus.ck_p),
+    .ddr3_cke(ddr3_bus.cke),
+    .ddr3_cs_n(ddr3_bus.cs_n),
+    .ddr3_dm(ddr3_bus.dm),
+    .ddr3_dq(ddr3_bus.dq),
+    .ddr3_dqs_n(ddr3_bus.dqs_n),
+    .ddr3_dqs_p(ddr3_bus.dqs_p),
+    .ddr3_odt(ddr3_bus.odt),
+    .ddr3_ras_n(ddr3_bus.ras_n),
+    .ddr3_reset_n(ddr3_bus.reset_n),
+    .ddr3_we_n(ddr3_bus.we_n)
+  );
 
-  // sns rd coeff
-  assign dut_if_h.sns_rd_coeff_vif.i_sensor_pixel_clk = u_ipp.sens_streamer.inst.i_sensor_pixel_clk;
-  assign dut_if_h.sns_rd_coeff_vif.row_start_sys_clk = u_ipp.sens_streamer.inst.row_start;
-  assign dut_if_h.sns_rd_coeff_vif.coeff_pixel_valid = u_ipp.sens_streamer.inst.coeff_pixel_valid;
-  assign dut_if_h.sns_rd_coeff_vif.coeff_ram_addr_b = u_ipp.sens_streamer.inst.coeff_bank_addr;
-  assign dut_if_h.sns_rd_coeff_vif.coeff_ram_data_b = u_ipp.sens_streamer.inst.coeff_ram_data_b;
-  assign dut_if_h.sns_rd_coeff_vif.coeff_3_2 = u_ipp.sens_streamer.inst.coeff_3_2;
-  assign dut_if_h.sns_rd_coeff_vif.coeff_2_1_0 = u_ipp.sens_streamer.inst.coeff_2_1_0;
-  assign dut_if_h.sns_rd_coeff_vif.coeff_0 = u_ipp.sens_streamer.inst.coeff_0;
-  assign dut_if_h.sns_rd_coeff_vif.coeff_1 = u_ipp.sens_streamer.inst.coeff_1;
-  assign dut_if_h.sns_rd_coeff_vif.coeff_2 = u_ipp.sens_streamer.inst.coeff_2;
-  assign dut_if_h.sns_rd_coeff_vif.coeff_a = u_ipp.sens_streamer.inst.coeff_a;
-  assign dut_if_h.sns_rd_coeff_vif.coeff_b = u_ipp.sens_streamer.inst.coeff_b;
-
-
-oct640_cu_clk_store_sys_0 clk_store_sys (
-  .clk_in1(board_clk),
-  .clk_out1(clk_store_sys_clk_out1),
-  .clk_out2(clk_store_sys_clk_out2),
-  .clk_out3(clk_store_sys_clk_out3),
-  .clk_out4(clk_store_sys_clk_out4),
-  .clk_out5(clk_store_sys_clk_out5),
-  .clk_out6(clk_store_sys_clk_out6),
-  .clk_out7(clk_store_sys_clk_out7),
-  .locked(clk_store_sys_locked)
-);
-
-
-image_processing_pipeline_imp_PQRLL2 u_ipp (
-  .bba(),
-  .coeff_table_idx_ratio(),
-  .coeff_table_ddr3_base_addr(dut_if_h.sys_vif.coeff_table_ddr3_base_addr),
-  .core_sys_rw_port_smc_bank_addr(),
-  .core_sys_rw_port_smc_bank_din(),
-  .core_sys_rw_port_smc_bank_dout(),
-  .core_sys_rw_port_smc_bank_en(),
-  .core_sys_rw_port_smc_bank_we(),
-  .core_sys_rw_port_smc_row_base_addr(),
-  .core_sys_rw_port_smc_bl8_offs(),
-  .core_sys_rw_port_smc_burst_num(),
-  .core_sys_rw_port_smc_burst_size(),
-  .core_sys_rw_port_smc_rw_req(),
-  .core_sys_rw_port_smc_rw_mod(),
-  .core_sys_rw_port_smc_rw_bsy(),
-  .ips_mipi_csi_phy_rst(),
-  .dbg_probe_mc_in_0(),
-  .dbg_probe_mc_in_2(),
-  .ddr3_addr(ddr3_addr),
-  .ddr3_ba(ddr3_ba),
-  .ddr3_cas_n(ddr3_cas_n),
-  .ddr3_ck_n(ddr3_ck_n),
-  .ddr3_ck_p(ddr3_ck_p),
-  .ddr3_cke(ddr3_cke),
-  .ddr3_cs_n(ddr3_cs_n),
-  .ddr3_dm(ddr3_dm),
-  .ddr3_dq(ddr3_dq),
-  .ddr3_dqs_n(ddr3_dqs_n),
-  .ddr3_dqs_p(ddr3_dqs_p),
-  .ddr3_odt(ddr3_odt),
-  .ddr3_ras_n(ddr3_ras_n),
-  .ddr3_reset_n(ddr3_reset_n),
-  .ddr3_we_n(ddr3_we_n),
-  .ddr_270_clk(clk_store_sys_clk_out5),
-  .ddr_clk(clk_store_sys_clk_out4),
-  .fr30_clk(clk_store_sys_clk_out6),
-  .fr60_clk(clk_store_sys_clk_out7),
-  .ips(dut_if_h.sys_vif.ips),
-  .ipst(),
-  .mipi_csi_axis_tdata(),
-  .mipi_csi_axis_tdest(),
-  .mipi_csi_axis_tkeep(),
-  .mipi_csi_axis_tlast(),
-  .mipi_csi_axis_tready(),
-  .mipi_csi_axis_tuser(),
-  .mipi_csi_axis_tvalid(),
-  .o_led(),
-  .pb_master_clk(proxy_board_master_clk),
-  .proxy_board_pixel_clk(proxy_board_pixel_clk),
-  .proxy_board_sens_hsync(proxy_board_sens_hsync),
-  .proxy_board_sens_pixel(proxy_board_sens_pixel),
-  .proxy_board_sens_trigger(proxy_board_sens_trigger),
-  .proxy_board_sens_vsync(proxy_board_sens_vsync),
-  .ref_clk(clk_store_sys_clk_out1),
-  .sens_img_frame_number(),
-  .sys_135_clk(clk_store_sys_clk_out3),
-  .sys_clk(clk_store_sys_clk_out2),
-  .sys_rst_n(rst_n),
-  .trigger(dut_if_h.pb_vif.trigger_in)
-);
-
-
-wire ddr3_ck_p_1 = ddr3_ck_p;
-`ifdef HANDLE_GATE_SIM_BUG
-  wire ddr3_ck_n_1 = ~ddr3_ck_n;
-`else
-  wire ddr3_ck_n_1 = ddr3_ck_n;
-`endif
 
   ddr3 u_ram (
-    .rst_n                      (ddr3_reset_n),
-    .ck                         (ddr3_ck_p_1),
-    .ck_n                       (ddr3_ck_n_1),
-    .odt                        (ddr3_odt),
-    .cke                        (ddr3_cke),
-    .cs_n                       (ddr3_cs_n),
-    .ras_n                      (ddr3_ras_n),
-    .cas_n                      (ddr3_cas_n),
-    .we_n                       (ddr3_we_n),
-    .ba                         (ddr3_ba),
-    .addr                       (ddr3_addr[14 - 1 : 0]),
-    .dm_tdqs                    (ddr3_dm),
-    .dqs                        (ddr3_dqs_p),
-    .dqs_n                      (ddr3_dqs_n),
-    .dq                         (ddr3_dq)
+    .rst_n    (ddr3_bus.reset_n),
+    .ck       (ddr3_bus.ddr3_ck_p),
+    .ck_n     (ddr3_bus.ddr3_ck_n),
+    .odt      (ddr3_bus.odt),
+    .cke      (ddr3_bus.cke),
+    .cs_n     (ddr3_bus.cs_n),
+    .ras_n    (ddr3_bus.ras_n),
+    .cas_n    (ddr3_bus.cas_n),
+    .we_n     (ddr3_bus.we_n),
+    .ba       (ddr3_bus.ba),
+    .addr     (ddr3_bus.addr[14 - 1 : 0]),
+    .dm_tdqs  (ddr3_bus.dm),
+    .dqs      (ddr3_bus.dqs_p),
+    .dqs_n    (ddr3_bus.dqs_n),
+    .dq       (ddr3_bus.dq)
   );
 
+
 endmodule
+
+`default_nettype wire
 // *************************************************************************************************

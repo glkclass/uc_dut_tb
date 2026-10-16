@@ -24,12 +24,11 @@ class mipi_csi_axis_txn extends dutb_txn_base;
 
     extern function                             new (string name = "mipi_csi_axis_txn");
     extern virtual  function vector_t           pack2vector ();
-    extern virtual  function void               unpack4vector (vector_t packed_txn);
 
     extern virtual  task                        generate_axis_tready ();
     extern virtual  task                        recieve_image ();
 
-    extern virtual  task                        monitor (input dutb_if_proxy_base dutb_if);
+    extern virtual  task                        monitor (input dutb_if_proxy_base dutb_if_proxy_h);
     extern virtual  function dutb_txn_base      gold ();
 
 endclass
@@ -49,21 +48,14 @@ function vector_t mipi_csi_axis_txn::pack2vector();
 endfunction
 
 
-function void mipi_csi_axis_txn::unpack4vector(vector_t packed_txn);
-    `ASSERT (packed_txn.size() > 0,
-            $sformatf("Wrong 'packed_txn' size: %0d", packed_txn.size()))
-    // bar = packed_txn[0];
-endfunction
-
-
 task mipi_csi_axis_txn::generate_axis_tready();
     forever
         begin
             int foo;
             @(posedge dut_vif.sys_clk);
             foo = $urandom_range(1);
-            // csi_vif.axis_tready = foo[0] & csi_vif.axis_tvalid;
-            csi_vif.axis_tready = foo[0];
+            // csi_vif.mipi_csi_axis_tready = foo[0] & csi_vif.mipi_csi_axis_tvalid;
+            csi_vif.mipi_csi_axis_tready = foo[0];
         end
 endtask
 
@@ -90,7 +82,7 @@ task mipi_csi_axis_txn::recieve_image();
                         begin
                             if (csi_vif.axis_frame_start)
                                 begin
-                                    `uvm_info_f($sformatf("frame_start %d", csi_vif.axis_frame_start));
+                                    `uvm_info_f("INF", $sformatf("frame_start %d", csi_vif.axis_frame_start));
 
                                     assert (1 == csi_vif.mipi_csi_row_number) else `uvm_fatal("MNTR", $sformatf("mipi_csi_row_number = %d", csi_vif.mipi_csi_row_number));
                                     assert (0 == n_image_col) else `uvm_fatal("MNTR", $sformatf("Image col = %d", n_image_col));
@@ -101,13 +93,13 @@ task mipi_csi_axis_txn::recieve_image();
                             assert(n_image_row < N_IMAGE_ROW) else `uvm_fatal("MNTR", $sformatf("Image row = %d", n_image_row));
                             assert(n_image_col < N_IMAGE_COL) else `uvm_fatal("MNTR", $sformatf("Image col = %d", n_image_col));
                             assert(n_image_row == n_image_row_d + 1) else `uvm_fatal("MNTR", $sformatf("Image row previous, current = %d, %d", n_image_row_d, n_image_row));
-                            `uvm_info_f($sformatf("Image row/col/data = %02d / %02d / 0x%04h / 0x%04h / 0x%04h / 0x%04h", n_image_row, n_image_col, csi_vif.axis_tword[0], csi_vif.axis_tword[1], csi_vif.axis_tword[2], csi_vif.axis_tword[3]));
+                            `uvm_info_f("INF", $sformatf("Image row/col/data = %02d / %02d / 0x%04h / 0x%04h / 0x%04h / 0x%04h", n_image_row, n_image_col, csi_vif.axis_tword[0], csi_vif.axis_tword[1], csi_vif.axis_tword[2], csi_vif.axis_tword[3]));
                             for (int i = 0; i < 4; i++) image[n_image_row][n_image_col + i] = csi_vif.axis_tword[i];
                             n_image_col += 4;
 
-                            if (csi_vif.axis_tlast)
+                            if (csi_vif.mipi_csi_axis_tlast)
                                 begin
-                                    `uvm_info_f($sformatf("axis_tlast %d", csi_vif.axis_tlast));
+                                    `uvm_info_f("INF", $sformatf("axis_tlast %d", csi_vif.mipi_csi_axis_tlast));
                                     assert (N_IMAGE_COL== n_image_col) else `uvm_fatal("MNTR", $sformatf("Image col = %d", n_image_col));
                                     n_image_col = 0;
                                     frame_recieved = ((N_IMAGE_ROW - 1) == n_image_row) ? 1'b1: 1'b0;
@@ -120,12 +112,12 @@ task mipi_csi_axis_txn::recieve_image();
 endtask
 
 
-task mipi_csi_axis_txn::monitor(input dutb_if_proxy_base dutb_if);
+task mipi_csi_axis_txn::monitor(input dutb_if_proxy_base dutb_if_proxy_h);
     u_shortint frame_number_d;
     // `uvm_info_d("Run monitor")
-    `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
+    `ASSERT_TYPE_CAST(dut_if_h, dutb_if_proxy_h)
     dut_vif = dut_if_h.dut_vif;
-    csi_vif = dut_if_h.dut_vif.csi_vif;
+    csi_vif = dut_if_h.axis_vif;
 
     wait (dut_vif.rst_n) #0;
 
@@ -146,4 +138,3 @@ function dutb_txn_base mipi_csi_axis_txn::gold();
     return dout_txn;
 endfunction
 // ****************************************************************************************************************************
-
