@@ -13,6 +13,7 @@ class sns_rd_ddr3_txn extends dutb_txn_base;
     dut_if_proxy dut_if_h;
     virtual dut_if          dut_vif;
     virtual sns_rd_ddr3_if  vif;
+    virtual sns_rd_ddr3_bram_if bram_vif;
 
     localparam integer      DDR3_ROW_SIZE   =   256;  // 256 x 64 = 1024 x 16
 
@@ -22,11 +23,10 @@ class sns_rd_ddr3_txn extends dutb_txn_base;
 
     extern function                             new (string name = "sns_rd_ddr3_txn");
     extern virtual  function vector_t           pack2vector ();
-    extern virtual  function void               unpack4vector (vector_t packed_txn);
 
     extern virtual  task                        check_rd_ddr3_txn ();
 
-    extern virtual  task                        monitor (input dutb_if_proxy_base dutb_if);
+    extern virtual  task                        monitor (input dutb_if_proxy_base dutb_if_proxy_h);
     extern virtual  function dutb_txn_base      gold ();
 
 endclass
@@ -45,36 +45,31 @@ function vector_t sns_rd_ddr3_txn::pack2vector();
     return foo;
 endfunction
 
-function void sns_rd_ddr3_txn::unpack4vector(vector_t packed_txn);
-    `ASSERT (packed_txn.size() > 0,
-            $sformatf("Wrong 'packed_txn' size: %0d", packed_txn.size()))
-    // bar = packed_txn[0];
-endfunction
-
 
 task sns_rd_ddr3_txn::check_rd_ddr3_txn();
-    @(posedge vif.rd_coeff_rw_req);
+    @(posedge vif.rd_coeff_ddr3_m_smc_rw_req);
     // `uvm_info_d($sformatf("verbosity_level: %d", verbosity_level))
-    `uvm_info_d($sformatf("rdreq for addr: %d", vif.rd_coeff_row_base_addr))
+    `uvm_info_d("INF", $sformatf("rdreq for addr: %d", vif.rd_coeff_ddr3_m_smc_row_base_addr))
     fork
         forever
             begin
-                @(posedge vif.rd_coeff_clk iff vif.rd_coeff_bram_we);
-                `uvm_info_d($sformatf("rd addr & data: %d 0x%016X", vif.rd_coeff_row_base_addr, vif.rd_coeff_bram_din))
+                @(posedge vif.i_sys_clk iff bram_vif.rd_coeff_ddr3_m_smc_bank_we);
+                `uvm_info_d("INF", $sformatf("rd addr & data: %d 0x%016X", vif.rd_coeff_ddr3_m_smc_row_base_addr, bram_vif.rd_coeff_ddr3_m_smc_bank_din))
             end
 
-        @(negedge vif.rd_coeff_rw_bsy)
-        `uvm_info_d($sformatf("rdbusy for addr: %d", vif.rd_coeff_row_base_addr))
+        @(negedge vif.rd_coeff_ddr3_m_smc_rw_bsy)
+        `uvm_info_d("INF", $sformatf("rdbusy for addr: %d", vif.rd_coeff_ddr3_m_smc_row_base_addr))
     join_any disable fork;
 
 endtask
 
 
-task sns_rd_ddr3_txn::monitor(input dutb_if_proxy_base dutb_if);
-    `uvm_info_d("Run monitor")
-    `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
+task sns_rd_ddr3_txn::monitor(input dutb_if_proxy_base dutb_if_proxy_h);
+    `uvm_info_d("INF", "Run monitor")
+    `ASSERT_TYPE_CAST(dut_if_h, dutb_if_proxy_h)
     dut_vif = dut_if_h.dut_vif;
-    vif = dut_if_h.dut_vif.sns_rd_ddr3_vif;
+    vif = dut_if_h.sns_rd_ddr3_vif;
+    bram_vif = dut_if_h.sns_rd_ddr3_bram_vif;
 
     wait (dut_vif.rst_n) #0;
     check_rd_ddr3_txn();
@@ -87,8 +82,6 @@ function dutb_txn_base sns_rd_ddr3_txn::gold();
     return dout_txn;
 endfunction
 // ****************************************************************************************************************************
-
-
 
 
 

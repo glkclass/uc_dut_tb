@@ -31,13 +31,12 @@ extends dutb_txn_base;
 
     extern function                             new (string name = "proxy_board_image_txn");
     extern virtual  function vector_t           pack2vector ();
-    extern virtual  function void               unpack4vector (vector_t packed_txn);
 
     extern virtual  task                        generate_pixel_clock ();
     extern virtual  task                        generate_image ();
 
-    extern virtual  task                        drive (input dutb_if_proxy_base dutb_if);
-    extern virtual  task                        monitor (input dutb_if_proxy_base dutb_if);
+    extern virtual  task                        drive (input dutb_if_proxy_base dutb_if_proxy_h);
+    extern virtual  task                        monitor (input dutb_if_proxy_base dutb_if_proxy_h);
     extern virtual  function dutb_txn_base      gold ();
 
 endclass
@@ -60,19 +59,13 @@ function vector_t proxy_board_image_txn::pack2vector();
 endfunction
 
 
-function void proxy_board_image_txn::unpack4vector(vector_t packed_txn);
-    `ASSERT (packed_txn.size() > 0,
-            $sformatf("Wrong 'packed_txn' size: %0d", packed_txn.size()))
-    // bar = packed_txn[0];
-endfunction
-
-
 task proxy_board_image_txn::generate_pixel_clock();
+    pb_vif.proxy_board_pixel_clk = 1'b0;
     forever
         begin
-            @(posedge pb_vif.master_clk);
-            @(posedge pb_vif.master_clk);
-            pb_vif.pixel_clk = ~pb_vif.pixel_clk;
+            @(posedge pb_vif.pb_master_clk);
+            @(posedge pb_vif.pb_master_clk);
+            pb_vif.proxy_board_pixel_clk = ~pb_vif.proxy_board_pixel_clk;
         end
 endtask
 
@@ -80,48 +73,48 @@ endtask
 task proxy_board_image_txn::generate_image();
     fork
         begin
-            pb_vif.vsync = 1'b0;
+            pb_vif.proxy_board_sens_vsync = 1'b0;
             repeat(vsync_len)
-                @(negedge pb_vif.pixel_clk);
-            pb_vif.vsync = 1'b1;
+                @(negedge pb_vif.proxy_board_pixel_clk);
+            pb_vif.proxy_board_sens_vsync = 1'b1;
         end
 
         begin
-            pb_vif.data = 16'dx;
+            pb_vif.proxy_board_sens_pixel = 16'dx;
 
             for (int i = 0; i < N_IMAGE_ROW; i = i + 1)
                 begin
-                    pb_vif.hsync = 1'b0;
+                    pb_vif.proxy_board_sens_hsync = 1'b0;
                     repeat(hsync_len)
-                        @(negedge pb_vif.pixel_clk);
-                    pb_vif.hsync = 1'b1;
+                        @(negedge pb_vif.proxy_board_pixel_clk);
+                    pb_vif.proxy_board_sens_hsync = 1'b1;
 
                     for (int j = 0; j < n_image_col; j = j + 1)
                         begin
-                            pb_vif.data = image[i][j];
-                            @(negedge pb_vif.pixel_clk);
+                            pb_vif.proxy_board_sens_pixel = image[i][j];
+                            @(negedge pb_vif.proxy_board_pixel_clk);
                         end
                 end
         end
     join;
 
-    pb_vif.vsync = 1'b0;
-    pb_vif.hsync = 1'b0;
+    pb_vif.proxy_board_sens_vsync = 1'b0;
+    pb_vif.proxy_board_sens_hsync = 1'b0;
 
 endtask
 
 
-task proxy_board_image_txn::drive(input dutb_if_proxy_base dutb_if);
+task proxy_board_image_txn::drive(input dutb_if_proxy_base dutb_if_proxy_h);
     // `uvm_info_d("Run driver")
-    `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
+    `ASSERT_TYPE_CAST(dut_if_h, dutb_if_proxy_h)
     dut_vif = dut_if_h.dut_vif;
-    pb_vif = dut_if_h.dut_vif.pb_vif;
+    pb_vif = dut_if_h.pb_vif;
 
 
 
-    pb_vif.vsync = 1'b0;
-    pb_vif.hsync = 1'b0;
-    pb_vif.data = 16'dx;
+    pb_vif.proxy_board_sens_vsync = 1'b0;
+    pb_vif.proxy_board_sens_hsync = 1'b0;
+    pb_vif.proxy_board_sens_pixel = 16'dx;
 
     fork
         generate_pixel_clock();
@@ -129,11 +122,11 @@ task proxy_board_image_txn::drive(input dutb_if_proxy_base dutb_if);
             wait (dut_vif.rst_n);
             wait (dut_vif.ddr_initilaized);
 
-            if (1'b1 == pb_vif.trigger_out)
+            if (1'b1 == pb_vif.proxy_board_sens_trigger)
                 begin
-                    @(negedge pb_vif.trigger_out);
+                    @(negedge pb_vif.proxy_board_sens_trigger);
                     repeat (TRIGGER_FRAME_START_GAP)
-                        @(posedge pb_vif.pixel_clk);
+                        @(posedge pb_vif.proxy_board_pixel_clk);
                 end
             generate_image();
         end
@@ -142,14 +135,14 @@ task proxy_board_image_txn::drive(input dutb_if_proxy_base dutb_if);
 endtask
 
 
-task proxy_board_image_txn::monitor(input dutb_if_proxy_base dutb_if);
+task proxy_board_image_txn::monitor(input dutb_if_proxy_base dutb_if_proxy_h);
     // `uvm_info_d("Run monitor")
-    `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
+    `ASSERT_TYPE_CAST(dut_if_h, dutb_if_proxy_h)
     dut_vif = dut_if_h.dut_vif;
-    pb_vif = dut_if_h.dut_vif.pb_vif;
+    pb_vif = dut_if_h.pb_vif;
 
     wait (dut_vif.rst_n) #0;
-    @(posedge pb_vif.vsync);
+    @(posedge pb_vif.proxy_board_sens_vsync);
 endtask
 
 
@@ -159,7 +152,6 @@ function dutb_txn_base proxy_board_image_txn::gold();
     return dout_txn;
 endfunction
 // ****************************************************************************************************************************
-
 
 
 

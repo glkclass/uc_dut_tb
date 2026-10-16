@@ -24,7 +24,7 @@ class `TXN_NAME extends dutb_txn_base;
     virtual sys_if vif;
 
     extern function                             new (string name = `STR(`TXN_NAME));
-    extern virtual  task                        drive (input dutb_if_proxy_base dutb_if);
+    extern virtual  task                        drive (input dutb_if_proxy_base dutb_if_proxy_h);
 
 endclass
 // ****************************************************************************************************************************
@@ -48,10 +48,10 @@ function `TXN_NAME::new(string name = `STR(`TXN_NAME));
 endfunction
 
 
-task `TXN_NAME::drive(input dutb_if_proxy_base dutb_if);
-    `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
+task `TXN_NAME::drive(input dutb_if_proxy_base dutb_if_proxy_h);
+    `ASSERT_TYPE_CAST(dut_if_h, dutb_if_proxy_h)
     dut_vif = dut_if_h.dut_vif;
-    vif = dut_if_h.dut_vif.sys_vif;
+    vif = dut_if_h.sys_vif;
 
     vif.coeff_table_ddr3_base_addr = `DDR3_MEMORY_CYCLIC_COEFF_TABLE_BASE_ADDR >> 11;
 
@@ -74,6 +74,5 @@ endtask
 
 typedef init_ips_txn                        init_ips_txn_default;
 // ****************************************************************************************************************************
-
 
 

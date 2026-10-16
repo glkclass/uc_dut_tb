@@ -1,0 +1,10 @@
+--testplusarg UVM_TESTNAME=dut_test_image_hc
+--testplusarg OCT_FPS=30
+--testplusarg TEST_LENGTH_NS=440000
+--testplusarg UVM_VERBOSITY=UVM_HIGH
+
+
+
+
+# --testplusarg uvm_set_verbosity=uvm_test_top.env_h.agent_h[9].monitor_h,_ALL_,UVM_NONE,run
+# --testplusarg UVM_TIMEOUT=200000,NO

@@ -1,0 +1,4 @@
+--testplusarg UVM_TESTNAME=dut_test_ffc
+--testplusarg TEST_LENGTH_NS=200000
+--testplusarg UVM_VERBOSITY=UVM_HIGH
+--testplusarg OCT_FPS=30

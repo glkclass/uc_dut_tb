@@ -15,7 +15,7 @@ class `TXN_NAME extends init_ips_txn;
     bit ffc_req;
 
     extern function                             new (string name = `STR(`TXN_NAME));
-    extern virtual  task                        drive (input dutb_if_proxy_base dutb_if);
+    extern virtual  task                        drive (input dutb_if_proxy_base dutb_if_proxy_h);
 
 endclass
 // ****************************************************************************************************************************
@@ -27,10 +27,10 @@ function `TXN_NAME::new(string name = `STR(`TXN_NAME));
 endfunction
 
 
-task `TXN_NAME::drive(input dutb_if_proxy_base dutb_if);
-    `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
+task `TXN_NAME::drive(input dutb_if_proxy_base dutb_if_proxy_h);
+    `ASSERT_TYPE_CAST(dut_if_h, dutb_if_proxy_h)
     dut_vif = dut_if_h.dut_vif;
-    vif = dut_if_h.dut_vif.sys_vif;
+    vif = dut_if_h.sys_vif;
 
     #1ms
     @(posedge dut_vif.sys_clk);
@@ -41,6 +41,5 @@ task `TXN_NAME::drive(input dutb_if_proxy_base dutb_if);
     wait(0);
 endtask
 // ****************************************************************************************************************************
-
 
 

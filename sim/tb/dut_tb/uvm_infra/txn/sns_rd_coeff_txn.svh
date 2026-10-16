@@ -19,11 +19,10 @@ class sns_rd_coeff_txn extends dutb_txn_base;
 
     extern function                             new (string name = "sns_rd_coeff_txn");
     extern virtual  function vector_t           pack2vector ();
-    extern virtual  function void               unpack4vector (vector_t packed_txn);
 
     extern virtual  task                        check_rd_coeff ();
 
-    extern virtual  task                        monitor (input dutb_if_proxy_base dutb_if);
+    extern virtual  task                        monitor (input dutb_if_proxy_base dutb_if_proxy_h);
     extern virtual  function dutb_txn_base      gold ();
 
 endclass
@@ -42,35 +41,29 @@ function vector_t sns_rd_coeff_txn::pack2vector();
     return foo;
 endfunction
 
-function void sns_rd_coeff_txn::unpack4vector(vector_t packed_txn);
-    `ASSERT (packed_txn.size() > 0,
-            $sformatf("Wrong 'packed_txn' size: %0d", packed_txn.size()))
-    // bar = packed_txn[0];
-endfunction
-
 
 task sns_rd_coeff_txn::check_rd_coeff();
     fork
         forever
             begin
                 @(posedge vif.i_sensor_pixel_clk iff vif.coeff_pixel_valid);
-                `uvm_info_d($sformatf("sns rd coeff: 0x%016X %d %d", vif.coeff_ram_data_b, vif.coeff_a, vif.coeff_b))
+                `uvm_info_d("INF", $sformatf("sns rd coeff: 0x%016X %d %d", vif.coeff_ram_data_b, vif.coeff_a, vif.coeff_b))
             end
 
             begin
-                @(posedge vif.row_start_sys_clk);
-                `uvm_info_d("sns row start")
+                @(posedge vif.row_start);
+                `uvm_info_d("INF", "sns row start")
             end
     join_any disable fork;
 
 endtask
 
 
-task sns_rd_coeff_txn::monitor(input dutb_if_proxy_base dutb_if);
+task sns_rd_coeff_txn::monitor(input dutb_if_proxy_base dutb_if_proxy_h);
     // `uvm_info_d("Run monitor")
-    `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
+    `ASSERT_TYPE_CAST(dut_if_h, dutb_if_proxy_h)
     dut_vif = dut_if_h.dut_vif;
-    vif = dut_if_h.dut_vif.sns_rd_coeff_vif;
+    vif = dut_if_h.sns_rd_coeff_vif;
 
     wait (dut_vif.rst_n) #0;
     check_rd_coeff();
@@ -83,7 +76,6 @@ function dutb_txn_base sns_rd_coeff_txn::gold();
     return dout_txn;
 endfunction
 // ****************************************************************************************************************************
-
 
 
 

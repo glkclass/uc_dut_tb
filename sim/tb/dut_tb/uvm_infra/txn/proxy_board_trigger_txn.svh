@@ -28,12 +28,11 @@ extends dutb_txn_base;
 
     extern function                             new (string name = "proxy_board_trigger_txn");
     extern virtual  function vector_t           pack2vector ();
-    extern virtual  function void               unpack4vector (vector_t packed_txn);
 
     extern virtual  task                        generate_trigger ();
 
-    extern virtual  task                        drive (input dutb_if_proxy_base dutb_if);
-    extern virtual  task                        monitor (input dutb_if_proxy_base dutb_if);
+    extern virtual  task                        drive (input dutb_if_proxy_base dutb_if_proxy_h);
+    extern virtual  task                        monitor (input dutb_if_proxy_base dutb_if_proxy_h);
     extern virtual  function dutb_txn_base      gold ();
 
 endclass
@@ -54,45 +53,37 @@ function vector_t proxy_board_trigger_txn::pack2vector();
 endfunction
 
 
-function void proxy_board_trigger_txn::unpack4vector(vector_t packed_txn);
-    `ASSERT (packed_txn.size() > 0,
-            $sformatf("Wrong 'packed_txn' size: %0d", packed_txn.size()))
-    // bar = packed_txn[0];
-endfunction
-
-
-
 task proxy_board_trigger_txn::generate_trigger();
 
-    `uvm_info_d($sformatf("triger_num: %d, trigger_len: %d", trigger_num, trigger_len))
+    `uvm_info_d("INF", $sformatf("triger_num: %d, trigger_len: %d", trigger_num, trigger_len))
 
     if (0 == trigger_num)
         begin
-            pb_vif.trigger_in = post_test_trigger_val;
+            pb_vif.trigger = post_test_trigger_val;
             forever
-                @(posedge pb_vif.pixel_clk);
+                @(posedge pb_vif.proxy_board_pixel_clk);
         end
     else
         begin
-            pb_vif.trigger_in = 1'b0;
+            pb_vif.trigger = 1'b0;
             repeat (trigger_len)
-                @(posedge pb_vif.pixel_clk);
-            pb_vif.trigger_in = 1'b1;
+                @(posedge pb_vif.proxy_board_pixel_clk);
+            pb_vif.trigger = 1'b1;
 
             repeat (trigger_gap)
-                @(posedge pb_vif.pixel_clk);
+                @(posedge pb_vif.proxy_board_pixel_clk);
 
             trigger_num--;
         end
 endtask
 
 
-task proxy_board_trigger_txn::drive(input dutb_if_proxy_base dutb_if);
+task proxy_board_trigger_txn::drive(input dutb_if_proxy_base dutb_if_proxy_h);
     // `uvm_info_d("Run driver")
-    `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
+    `ASSERT_TYPE_CAST(dut_if_h, dutb_if_proxy_h)
     dut_vif = dut_if_h.dut_vif;
-    pb_vif = dut_if_h.dut_vif.pb_vif;
-    pb_vif.trigger_in = 1'b1;
+    pb_vif = dut_if_h.pb_vif;
+    pb_vif.trigger = 1'b1;
 
     wait (dut_vif.rst_n);
     wait (dut_vif.ddr_initilaized);
@@ -100,14 +91,14 @@ task proxy_board_trigger_txn::drive(input dutb_if_proxy_base dutb_if);
 endtask
 
 
-task proxy_board_trigger_txn::monitor(input dutb_if_proxy_base dutb_if);
+task proxy_board_trigger_txn::monitor(input dutb_if_proxy_base dutb_if_proxy_h);
     // `uvm_info_d("Run monitor")
-    `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
+    `ASSERT_TYPE_CAST(dut_if_h, dutb_if_proxy_h)
     dut_vif = dut_if_h.dut_vif;
-    pb_vif = dut_if_h.dut_vif.pb_vif;
+    pb_vif = dut_if_h.pb_vif;
 
     wait (dut_vif.rst_n) #0;
-    @(negedge pb_vif.trigger_in);
+    @(negedge pb_vif.trigger);
 endtask
 
 
@@ -117,7 +108,6 @@ function dutb_txn_base proxy_board_trigger_txn::gold();
     return dout_txn;
 endfunction
 // ****************************************************************************************************************************
-
 
 
 

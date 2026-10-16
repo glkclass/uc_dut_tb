@@ -29,13 +29,12 @@ class core_sys_txn extends dutb_txn_base;
 
     extern function                             new (string name = "core_sys_txn");
     extern virtual  function vector_t           pack2vector ();
-    extern virtual  function void               unpack4vector (vector_t packed_txn);
 
     extern virtual  task                        generate_wr_request ();
     extern virtual  task                        provide_bram_response ();
 
-    extern virtual  task                        drive (input dutb_if_proxy_base dutb_if);
-    extern virtual  task                        monitor (input dutb_if_proxy_base dutb_if);
+    extern virtual  task                        drive (input dutb_if_proxy_base dutb_if_proxy_h);
+    extern virtual  task                        monitor (input dutb_if_proxy_base dutb_if_proxy_h);
     extern virtual  function dutb_txn_base      gold ();
 
 endclass
@@ -54,32 +53,26 @@ function vector_t core_sys_txn::pack2vector();
     return foo;
 endfunction
 
-function void core_sys_txn::unpack4vector(vector_t packed_txn);
-    `ASSERT (packed_txn.size() > 0,
-            $sformatf("Wrong 'packed_txn' size: %0d", packed_txn.size()))
-    // bar = packed_txn[0];
-endfunction
-
 
 task core_sys_txn::generate_wr_request();
 
     if (n_row < 16)
         begin
             @(posedge dut_vif.sys_clk);
-            cs_vif.row_base_addr = `DDR3_MEMORY_CYCLIC_COEFF_TABLE_BASE_ADDR / `DDR3_LINE_SIZE + 2 * n_row;
+            cs_vif.core_sys_rw_port_smc_row_base_addr = `DDR3_MEMORY_CYCLIC_COEFF_TABLE_BASE_ADDR / `DDR3_LINE_SIZE + 2 * n_row;
             n_row++;
-            `uvm_info_d($sformatf("core sys rw_req for addr: %d", cs_vif.row_base_addr))
+            `uvm_info_d("INF", $sformatf("core sys rw_req for addr: %d", cs_vif.core_sys_rw_port_smc_row_base_addr))
 
-            cs_vif.bl8_offs = 0;
-            cs_vif.burst_num = 0;
-            cs_vif.burst_size = 31;
-            cs_vif.rw_req = 1'b0;
-            cs_vif.rw_mod = 1'b1;
+            cs_vif.core_sys_rw_port_smc_bl8_offs = 0;
+            cs_vif.core_sys_rw_port_smc_burst_num = 0;
+            cs_vif.core_sys_rw_port_smc_burst_size = 31;
+            cs_vif.core_sys_rw_port_smc_rw_req = 1'b0;
+            cs_vif.core_sys_rw_port_smc_rw_mod = 1'b1;
             @(posedge dut_vif.sys_clk);
-            cs_vif.rw_req = 1'b1;
+            cs_vif.core_sys_rw_port_smc_rw_req = 1'b1;
             repeat(16)
                 @(posedge dut_vif.sys_clk);
-            cs_vif.rw_req = 1'b0;
+            cs_vif.core_sys_rw_port_smc_rw_req = 1'b0;
         end
     forever @(posedge dut_vif.sys_clk);
 endtask
@@ -89,7 +82,7 @@ task core_sys_txn::provide_bram_response();
     int i;
     shortint coeffs[128 * 3 + 128];
 
-    @(posedge dut_vif.sys_clk iff cs_vif.rw_req);
+    @(posedge dut_vif.sys_clk iff cs_vif.core_sys_rw_port_smc_rw_req);
 
     for (i = 0; i < 128; i++)
         begin
@@ -97,44 +90,44 @@ task core_sys_txn::provide_bram_response();
             logic [22 - 1 : 0] coeff_b;
             logic [48 - 1 : 0] coeff_a_b;
 
-            coeff_a = 128 * cs_vif.row_base_addr + 2 * i;
-            coeff_b = 128 * cs_vif.row_base_addr + 2 * i + 1;
+            coeff_a = 128 * cs_vif.core_sys_rw_port_smc_row_base_addr + 2 * i;
+            coeff_b = 128 * cs_vif.core_sys_rw_port_smc_row_base_addr + 2 * i + 1;
             coeff_a_b = {coeff_b, coeff_a};
 
             coeffs[3 * i] = coeff_a_b[15 : 0];
             coeffs[3 * i + 1] = coeff_a_b[31 : 16];
             coeffs[3 * i + 2] = coeff_a_b[47 : 32];
 
-            `uvm_info_d($sformatf("provide_bram_response: %d 0x%08X 0x%08X 0x%04X 0x%04X 0x%04X", i, coeff_a, coeff_b, coeffs[3 * i], coeffs[3 * i + 1], coeffs[3 * i + 2]))
+            `uvm_info_d("INF", $sformatf("provide_bram_response: %d 0x%08X 0x%08X 0x%04X 0x%04X 0x%04X", i, coeff_a, coeff_b, coeffs[3 * i], coeffs[3 * i + 1], coeffs[3 * i + 2]))
         end
 
 
     i = 0;
     forever
         begin
-            @(posedge dut_vif.sys_clk iff cs_vif.bram_en);
-            cs_vif.bram_dout = {coeffs[4 * i + 3], coeffs[4 * i + 2], coeffs[4 * i + 1], coeffs[4 * i]};
-            `uvm_info_d($sformatf("provide_bram_response: %d 0x%016X", i, cs_vif.bram_dout))
+            @(posedge dut_vif.sys_clk iff cs_vif.core_sys_rw_port_smc_bank_en);
+            cs_vif.core_sys_rw_port_smc_bank_dout = {coeffs[4 * i + 3], coeffs[4 * i + 2], coeffs[4 * i + 1], coeffs[4 * i]};
+            `uvm_info_d("INF", $sformatf("provide_bram_response: %d 0x%016X", i, cs_vif.core_sys_rw_port_smc_bank_dout))
             i++;
         end
 endtask
 
 
-task core_sys_txn::drive(input dutb_if_proxy_base dutb_if);
+task core_sys_txn::drive(input dutb_if_proxy_base dutb_if_proxy_h);
     // `uvm_info_d("Run driver")
-    `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
+    `ASSERT_TYPE_CAST(dut_if_h, dutb_if_proxy_h)
     dut_vif = dut_if_h.dut_vif;
-    cs_vif = dut_if_h.dut_vif.core_sys_rw_vif;
+    cs_vif = dut_if_h.core_sys_rw_vif;
 
     wait (dut_vif.ddr_initilaized) #0;
 
-    cs_vif.rw_req = 1'b0;
+    cs_vif.core_sys_rw_port_smc_rw_req = 1'b0;
 
     fork
         generate_wr_request();
         provide_bram_response();
         begin
-            @(negedge dut_vif.sys_clk iff cs_vif.rw_bsy);
+            @(negedge dut_vif.sys_clk iff cs_vif.core_sys_rw_port_smc_rw_bsy);
             // `uvm_info_d($sformatf("core sys wrrsp for addr: %d", cs_vif.start_row_addr))
             #10us;
         end
@@ -143,14 +136,14 @@ task core_sys_txn::drive(input dutb_if_proxy_base dutb_if);
 endtask
 
 
-task core_sys_txn::monitor(input dutb_if_proxy_base dutb_if);
+task core_sys_txn::monitor(input dutb_if_proxy_base dutb_if_proxy_h);
     // `uvm_info_d("Run monitor")
-    `ASSERT_TYPE_CAST(dut_if_h, dutb_if)
+    `ASSERT_TYPE_CAST(dut_if_h, dutb_if_proxy_h)
     dut_vif = dut_if_h.dut_vif;
-    cs_vif = dut_if_h.dut_vif.core_sys_rw_vif;
+    cs_vif = dut_if_h.core_sys_rw_vif;
 
     wait (dut_vif.rst_n) #0;
-    @(posedge cs_vif.rw_req);
+    @(posedge cs_vif.core_sys_rw_port_smc_rw_req);
 endtask
 
 
@@ -160,7 +153,6 @@ function dutb_txn_base core_sys_txn::gold();
     return dout_txn;
 endfunction
 // ****************************************************************************************************************************
-
 
 
 

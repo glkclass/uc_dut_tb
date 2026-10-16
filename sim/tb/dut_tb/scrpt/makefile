@@ -84,7 +84,7 @@ elab:
 	@cd $(BUILD_FOLDER)
 
 	envsubst < ../elab_tb.opt > tmp.opt
-	@$(ELAB_BIN_TOOL) -f tmp.opt
+	@set -o pipefail; $(ELAB_BIN_TOOL) -f tmp.opt 2>&1 | grep -Ev ${ELAB_FILTER_MSG_PATTERN}
 	$(ECHO_FOOTER)
 
 
