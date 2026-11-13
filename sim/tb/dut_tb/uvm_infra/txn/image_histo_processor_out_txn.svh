@@ -34,7 +34,7 @@ class `TXN_NAME extends dutb_txn_base;
     uvm_component parent = null);
 
   extern virtual  function void     init_vif(input dutb_if_proxy_base dutb_if_proxy_h);;
-  extern virtual  function vector_t pack2vector ();
+  extern virtual  function int_vector_t pack2vector ();
   extern virtual  task              catch_output ();
   extern virtual  task              monitor (input dutb_if_proxy_base dutb_if_proxy_h);
   extern virtual  function bit      do_compare (uvm_object rhs, uvm_comparer comparer);
@@ -124,8 +124,8 @@ function void `TXN_NAME::calculate_histo_cdf_p_cutoff();
 endfunction
 
 
-function vector_t `TXN_NAME::pack2vector();
-  vector_t txn_packed;
+function int_vector_t `TXN_NAME::pack2vector();
+  int_vector_t txn_packed;
   integer idx = 0;
   txn_packed = new[2*HISTO_SZ + 6];
 

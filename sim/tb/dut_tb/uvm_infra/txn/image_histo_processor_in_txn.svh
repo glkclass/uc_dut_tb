@@ -25,7 +25,7 @@ class `TXN_NAME extends dutb_txn_base;
       uvm_component parent = null);
 
     extern virtual  function void           init_vif(input dutb_if_proxy_base dutb_if_proxy_h);;
-    extern virtual  function vector_t       pack2vector ();
+    extern virtual  function int_vector_t       pack2vector ();
     extern virtual  task                    catch_input ();
     extern virtual  task                    monitor (input dutb_if_proxy_base dutb_if_proxy_h);
     extern virtual  function dutb_txn_base  gold ();
@@ -48,8 +48,8 @@ function void `TXN_NAME::init_vif(input dutb_if_proxy_base dutb_if_proxy_h);;
 endfunction
 
 
-function vector_t `TXN_NAME::pack2vector();
-    vector_t packed_txn;
+function int_vector_t `TXN_NAME::pack2vector();
+    int_vector_t packed_txn;
     packed_txn = new[N_IMAGE_ROW * N_IMAGE_COL + 1];
 
     foreach (frame[row, col]) begin

@@ -35,13 +35,13 @@ function `TXN_NAME::new(string name = `STR(`TXN_NAME));
     super.new(name);
 
     // Get runtime config
-    fps = `get_arg_value("OCT_FPS=%d", fps, `IPS_FPS_30);
-    pp_mode = `get_arg_value("OCT_PP_MODE=%d", pp_mode, `IPS_PP_RAW_IMAGE);
-    mipi_csi_stream_en = `get_arg_value("OCT_MIPI_CSI_STREAM_EN=%d", mipi_csi_stream_en, 1'b1);
-    mipi_csi_data_format = `get_arg_value("OCT_MIPI_CSI_DATA_FORMAT=%d", mipi_csi_data_format, `RAW16_BE);
-    uvc_stream_en = `get_arg_value("OCT_UVC_STREAM_EN=%d", uvc_stream_en, 1'b1);
-    trigger_en = `get_arg_value("OCT_TRIGGER_EN=%d", trigger_en, 1'b1);
-    dpm_en = `get_arg_value("OCT_DPM=%d", dpm_en, 1'b1);
+    fps = `get_plusarg_value("OCT_FPS=%d", fps, `IPS_FPS_30);
+    pp_mode = `get_plusarg_value("OCT_PP_MODE=%d", pp_mode, `IPS_PP_RAW_IMAGE);
+    mipi_csi_stream_en = `get_plusarg_value("OCT_MIPI_CSI_STREAM_EN=%d", mipi_csi_stream_en, 1'b1);
+    mipi_csi_data_format = `get_plusarg_value("OCT_MIPI_CSI_DATA_FORMAT=%d", mipi_csi_data_format, `RAW16_BE);
+    uvc_stream_en = `get_plusarg_value("OCT_UVC_STREAM_EN=%d", uvc_stream_en, 1'b1);
+    trigger_en = `get_plusarg_value("OCT_TRIGGER_EN=%d", trigger_en, 1'b1);
+    dpm_en = `get_plusarg_value("OCT_DPM=%d", dpm_en, 1'b1);
     led_en = 1'b0;
     soft_trigger = 1'b0;
     ffc_req = 1'b0;

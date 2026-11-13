@@ -22,7 +22,7 @@ class sns_rd_ddr3_txn extends dutb_txn_base;
     logic   [4 * RAM_DATA_W - 1         : 0]        ddr3_packet[2 * DDR3_ROW_SIZE];
 
     extern function                             new (string name = "sns_rd_ddr3_txn");
-    extern virtual  function vector_t           pack2vector ();
+    extern virtual  function int_vector_t           pack2vector ();
 
     extern virtual  task                        check_rd_ddr3_txn ();
 
@@ -39,8 +39,8 @@ function sns_rd_ddr3_txn::new(string name = "sns_rd_ddr3_txn");
 endfunction
 
 
-function vector_t sns_rd_ddr3_txn::pack2vector();
-    vector_t foo;
+function int_vector_t sns_rd_ddr3_txn::pack2vector();
+    int_vector_t foo;
     foo = new[0];
     return foo;
 endfunction

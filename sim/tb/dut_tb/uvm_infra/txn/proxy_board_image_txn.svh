@@ -30,7 +30,7 @@ extends dutb_txn_base;
     }
 
     extern function                             new (string name = "proxy_board_image_txn");
-    extern virtual  function vector_t           pack2vector ();
+    extern virtual  function int_vector_t           pack2vector ();
 
     extern virtual  task                        generate_pixel_clock ();
     extern virtual  task                        generate_image ();
@@ -52,8 +52,8 @@ function proxy_board_image_txn::new(string name = "proxy_board_image_txn");
 endfunction
 
 
-function vector_t proxy_board_image_txn::pack2vector();
-    vector_t foo;
+function int_vector_t proxy_board_image_txn::pack2vector();
+    int_vector_t foo;
     foo = new[0];
     return foo;
 endfunction

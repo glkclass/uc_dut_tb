@@ -17,13 +17,13 @@ class mipi_csi_axis_txn extends dutb_txn_base;
 
 
     typedef logic     [IMAGE_PIXEL_W - 1  :   0]    t_pixel;
-    u_shortint                                      frame_number;
+    shortint unsigned                               frame_number;
     t_pixel                                         image[N_IMAGE_ROW][N_IMAGE_COL];
 
-    static u_shortint                               frame_idx = 16'd0;
+    static shortint unsigned                        frame_idx = 16'd0;
 
     extern function                             new (string name = "mipi_csi_axis_txn");
-    extern virtual  function vector_t           pack2vector ();
+    extern virtual  function int_vector_t           pack2vector ();
 
     extern virtual  task                        generate_axis_tready ();
     extern virtual  task                        recieve_image ();
@@ -41,8 +41,8 @@ function mipi_csi_axis_txn::new(string name = "mipi_csi_axis_txn");
 endfunction
 
 
-function vector_t mipi_csi_axis_txn::pack2vector();
-    vector_t foo;
+function int_vector_t mipi_csi_axis_txn::pack2vector();
+    int_vector_t foo;
     foo = new[0];
     return foo;
 endfunction
@@ -113,7 +113,7 @@ endtask
 
 
 task mipi_csi_axis_txn::monitor(input dutb_if_proxy_base dutb_if_proxy_h);
-    u_shortint frame_number_d;
+    shortint unsigned frame_number_d;
     // `uvm_info_d("Run monitor")
     `ASSERT_TYPE_CAST(dut_if_h, dutb_if_proxy_h)
     dut_vif = dut_if_h.dut_vif;

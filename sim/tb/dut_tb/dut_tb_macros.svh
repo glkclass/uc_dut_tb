@@ -7,6 +7,7 @@
 
 // *************************************************************************************************
 `ifndef DUT_TB_MACRO_SVH
+`define DUT_TB_MACRO_SVH
 
 `define IMAGE_HISTO_PROCESSOR_PATH(item) u_ipp.image_histo_processor.inst.``item
 `define SENS_STREAMER_PATH(item) u_ipp.sens_streamer.inst.``item
@@ -16,8 +17,6 @@
 `define HISTO_BRAM_UNIT(idx) u_ipp.image_histo_processor.inst.u_histo_bank_``idx``.inst.native_mem_module.blk_mem_gen_v8_4_11_inst
 `define HISTO_BRAM_PATH(idx, item) `HISTO_BRAM_UNIT(idx)``.item
 
-
-`define DUT_TB_MACRO_SVH
 `endif
 
 // *************************************************************************************************

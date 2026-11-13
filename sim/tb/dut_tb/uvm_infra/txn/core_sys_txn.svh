@@ -28,7 +28,7 @@ class core_sys_txn extends dutb_txn_base;
     }
 
     extern function                             new (string name = "core_sys_txn");
-    extern virtual  function vector_t           pack2vector ();
+    extern virtual  function int_vector_t           pack2vector ();
 
     extern virtual  task                        generate_wr_request ();
     extern virtual  task                        provide_bram_response ();
@@ -47,8 +47,8 @@ function core_sys_txn::new(string name = "core_sys_txn");
 endfunction
 
 
-function vector_t core_sys_txn::pack2vector();
-    vector_t foo;
+function int_vector_t core_sys_txn::pack2vector();
+    int_vector_t foo;
     foo = new[0];
     return foo;
 endfunction

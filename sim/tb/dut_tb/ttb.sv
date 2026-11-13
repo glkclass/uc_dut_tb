@@ -5,9 +5,12 @@
     Description     :
 ***************************************************************************************************/
 
+`timescale 1ns / 1ps
+
 `include "uvm_macros.svh"
 import uvm_pkg::*;
 
+`include "dutb_macros.svh"
 `include "dut_tb_macros.svh"
 `include "top_func_proxy.svh"
 
@@ -15,19 +18,10 @@ import uvm_pkg::*;
 
 // *************************************************************************************************
 module ttb;
-  import dut_tb_pkg::dut_test;
-
   import dutb_util_pkg::timeout_sim;
 
   import dut_tb_util_pkg::T_CLK_100MHZ_PERIOD;
   import dut_tb_util_pkg::T_RST_N_LEN;
-
-  import oct640_cu_util_pkg::IMAGE_PIXEL_W;
-
-  import oct640_cu_util_pkg::DDR3_BANK_W;
-  import oct640_cu_util_pkg::DDR3_ROW_W;
-  import oct640_cu_util_pkg::DDR3_DQ_W;
-  import oct640_cu_util_pkg::DDR3_DM_W;
 
 
 // wires
@@ -41,65 +35,11 @@ module ttb;
       clk_store_sys_clk_out4,
       clk_store_sys_clk_out5,
       clk_store_sys_clk_out6,
-      clk_store_sys_clk_out7,
-      clk_store_sys_locked;
+      clk_store_sys_clk_out7;
 
-  logic                               sensor_sck;
-  logic                               sensor_cs_n;
-  logic                               sensor_mosi;
 
 // main
 
-  // Setup env and start
-  initial begin
-      int test_length_ns;
-      // Provide access to ttb static funcs for UVM infra
-      static top_func_proxy top_func_proxy = new();
-      uvm_config_db #(base_func_proxy)::set(null, "*", "top_func_proxy", top_func_proxy);
-
-      $timeformat(-9, 3, " ns", 13);
-      `store_wave(ttb, "wf.vcd")
-
-      test_length_ns = `get_arg_value("TEST_LENGTH_NS=%d", test_length_ns, 1ms);
-      `uvm_info("TTB", $sformatf("Max test length: %0d ns", test_length_ns), UVM_HIGH)
-
-      // Provide DUT interfaces to UVM infra
-
-      uvm_config_db #(virtual image_histo_processor_if)::set(
-        null,
-        "uvm_test_top.env_h*",
-        "dut_ihp_vif",
-        `IMAGE_HISTO_PROCESSOR_PATH(image_histo_processor_bind_if));
-
-      uvm_config_db #(virtual sns_rd_coeff_if)::set(
-        null, "uvm_test_top.env_h*", "sns_rd_coeff_vif", `SENS_STREAMER_PATH(sns_rd_coeff_bind_if));
-      uvm_config_db #(virtual sns_rd_ddr3_if)::set(
-        null, "uvm_test_top.env_h*", "sns_rd_ddr3_vif", `SENS_STREAMER_PATH(sns_rd_ddr3_bind_if));
-      uvm_config_db #(virtual sns_rd_ddr3_bram_if)::set(
-        null, "uvm_test_top.env_h*", "sns_rd_ddr3_bram_vif", `BANK_STORE_PATH(sns_rd_ddr3_bram_bind_if));
-      uvm_config_db #(virtual pb_if)::set(
-        null, "uvm_test_top.env_h*", "pb_vif", `IPP_PATH(pb_bind_if));
-      uvm_config_db #(virtual sys_if)::set(
-        null, "uvm_test_top.env_h*", "sys_vif", `IPP_PATH(sys_bind_if));
-      uvm_config_db #(virtual sm_core_rw_if)::set(
-        null, "uvm_test_top.env_h*", "core_sys_rw_vif", `IPP_PATH(core_sys_rw_bind_if));
-      uvm_config_db #(virtual axis_if)::set(
-        null, "uvm_test_top.env_h*", "axis_vif", `IPP_PATH(axis_bind_if));
-      uvm_config_db #(virtual uvc_if)::set(
-        null, "uvm_test_top.env_h*", "uvc_vif", `IPP_PATH(uvc_bind_if));
-      uvm_config_db #(virtual histo_bram_if)::set(
-        null, "uvm_test_top.env_h*", "histo_bram_0_vif", `HISTO_BRAM_PATH(0, histo_bram_bind_if));
-      uvm_config_db #(virtual histo_bram_if)::set(
-        null, "uvm_test_top.env_h*", "histo_bram_1_vif", `HISTO_BRAM_PATH(1, histo_bram_bind_if));
-
-      uvm_config_db #(virtual dut_if)::set(null, "uvm_test_top.env_h*", "dut_vif", dut_if_h);
-
-      // Start test
-      fork
-          run_test();
-          timeout_sim(test_length_ns * 1ns, 10);
-     join_any
-  end
 
 
   // global reset
@@ -126,17 +66,7 @@ module ttb;
   ddr3_if ddr3_bus();
 
 
-  bind image_histo_processor image_histo_processor_if image_histo_processor_bind_if (.*);
-  bind sens_streamer sns_rd_coeff_if sns_rd_coeff_bind_if (.*);
-  bind sens_streamer sns_rd_ddr3_if sns_rd_ddr3_bind_if (.*);
-  bind bank_store sns_rd_ddr3_bram_if sns_rd_ddr3_bram_bind_if (.*);
-  bind image_processing_pipeline_imp_PQRLL2 pb_if pb_bind_if (.*);
-  bind image_processing_pipeline_imp_PQRLL2 sys_if sys_bind_if (.*);
-  bind image_processing_pipeline_imp_PQRLL2 sm_core_rw_if core_sys_rw_bind_if (.*);
-  bind image_processing_pipeline_imp_PQRLL2 axis_if axis_bind_if (.*);
-  bind image_processing_pipeline_imp_PQRLL2 uvc_if uvc_bind_if (.*);
-  bind `HISTO_BRAM_UNIT(0) histo_bram_if histo_bram_bind_if(.*);
-  bind `HISTO_BRAM_UNIT(1) histo_bram_if histo_bram_bind_if(.*);
+
 
   oct640_cu_clk_store_sys_0 clk_store_sys (
     .clk_in1(board_clk),
@@ -146,8 +76,7 @@ module ttb;
     .clk_out4(clk_store_sys_clk_out4),
     .clk_out5(clk_store_sys_clk_out5),
     .clk_out6(clk_store_sys_clk_out6),
-    .clk_out7(clk_store_sys_clk_out7),
-    .locked(clk_store_sys_locked)
+    .clk_out7(clk_store_sys_clk_out7)
   );
 
 
@@ -196,6 +125,72 @@ module ttb;
     .dqs_n    (ddr3_bus.dqs_n),
     .dq       (ddr3_bus.dq)
   );
+
+  bind image_histo_processor image_histo_processor_if image_histo_processor_bind_if (.*);
+  bind sens_streamer sns_rd_coeff_if sns_rd_coeff_bind_if (.*);
+  bind sens_streamer sns_rd_ddr3_if sns_rd_ddr3_bind_if (.*);
+  bind bank_store sns_rd_ddr3_bram_if sns_rd_ddr3_bram_bind_if (.*);
+  bind image_processing_pipeline_imp_PQRLL2 pb_if pb_bind_if (.*);
+  bind image_processing_pipeline_imp_PQRLL2 sys_if sys_bind_if (.*);
+  bind image_processing_pipeline_imp_PQRLL2 sm_core_rw_if core_sys_rw_bind_if (.*);
+  bind image_processing_pipeline_imp_PQRLL2 axis_if axis_bind_if (.*);
+  bind image_processing_pipeline_imp_PQRLL2 uvc_if uvc_bind_if (.*);
+  bind `HISTO_BRAM_UNIT(0) histo_bram_if histo_bram_bind_if(.*);
+  bind `HISTO_BRAM_UNIT(1) histo_bram_if histo_bram_bind_if(.*);
+
+
+  // Setup env and start
+  initial begin
+      integer unsigned test_length_ns;
+      time test_length;
+      // Provide access to ttb static funcs for UVM infra
+      static top_func_proxy top_func_proxy = new();
+      uvm_config_db #(base_func_proxy)::set(null, "*", "top_func_proxy", top_func_proxy);
+
+      $timeformat(-9, 3, " ns", 13);
+      `store_wave(ttb, "wf.vcd")
+
+      test_length_ns = `get_plusarg_value("TEST_LENGTH_NS=%d", test_length_ns, 1000000);
+      test_length = time'(test_length_ns);
+      `uvm_info("TTB", $sformatf("Max test length: %0t", test_length), UVM_HIGH)
+
+      // Provide DUT interfaces to UVM infra
+
+      uvm_config_db #(virtual image_histo_processor_if)::set(
+        null,
+        "uvm_test_top.env_h*",
+        "dut_ihp_vif",
+        `IMAGE_HISTO_PROCESSOR_PATH(image_histo_processor_bind_if));
+
+      uvm_config_db #(virtual sns_rd_coeff_if)::set(
+        null, "uvm_test_top.env_h*", "sns_rd_coeff_vif", `SENS_STREAMER_PATH(sns_rd_coeff_bind_if));
+      uvm_config_db #(virtual sns_rd_ddr3_if)::set(
+        null, "uvm_test_top.env_h*", "sns_rd_ddr3_vif", `SENS_STREAMER_PATH(sns_rd_ddr3_bind_if));
+      uvm_config_db #(virtual sns_rd_ddr3_bram_if)::set(
+        null, "uvm_test_top.env_h*", "sns_rd_ddr3_bram_vif", `BANK_STORE_PATH(sns_rd_ddr3_bram_bind_if));
+      uvm_config_db #(virtual pb_if)::set(
+        null, "uvm_test_top.env_h*", "pb_vif", `IPP_PATH(pb_bind_if));
+      uvm_config_db #(virtual sys_if)::set(
+        null, "uvm_test_top.env_h*", "sys_vif", `IPP_PATH(sys_bind_if));
+      uvm_config_db #(virtual sm_core_rw_if)::set(
+        null, "uvm_test_top.env_h*", "core_sys_rw_vif", `IPP_PATH(core_sys_rw_bind_if));
+      uvm_config_db #(virtual axis_if)::set(
+        null, "uvm_test_top.env_h*", "axis_vif", `IPP_PATH(axis_bind_if));
+      uvm_config_db #(virtual uvc_if)::set(
+        null, "uvm_test_top.env_h*", "uvc_vif", `IPP_PATH(uvc_bind_if));
+      uvm_config_db #(virtual histo_bram_if)::set(
+        null, "uvm_test_top.env_h*", "histo_bram_0_vif", `HISTO_BRAM_PATH(0, histo_bram_bind_if));
+      uvm_config_db #(virtual histo_bram_if)::set(
+        null, "uvm_test_top.env_h*", "histo_bram_1_vif", `HISTO_BRAM_PATH(1, histo_bram_bind_if));
+
+      uvm_config_db #(virtual dut_if)::set(null, "uvm_test_top.env_h*", "dut_vif", dut_if_h);
+
+      // Start test
+      fork
+          run_test();
+          timeout_sim(test_length, 10);
+     join_any
+  end
 
 
 endmodule
